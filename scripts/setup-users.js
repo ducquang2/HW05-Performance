@@ -1,4 +1,4 @@
-// Tạo user test cho JMeter và sinh các file CSV trong data/.
+// Tạo user test quang_u001..quang_u200 cho JMeter (workflow W2) và sinh các file CSV trong data/.
 // Chạy: node scripts/setup-users.js  (backend phải đang chạy ở BASE_URL)
 // Lưu ý: restart backend sẽ reseed DB, mất user đã tạo -> chạy lại script này.
 const fs = require("fs");
@@ -6,12 +6,10 @@ const path = require("path");
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const DATA_DIR = path.join(__dirname, "..", "data");
-const PASSWORD = "Perf1234!";
-const WRONG_PASSWORD = "Wrong999!";
+const PASSWORD = "Quang1234!";
+const USER_COUNT = 200; // >= số VU lớn nhất dự kiến (Stress/Spike ~150-200)
 
-const pad = (n, w) => String(n).padStart(w, "0");
-const mainUsers = Array.from({ length: 200 }, (_, i) => `perf${pad(i + 1, 3)}@eshop.com`);
-const lockUsers = Array.from({ length: 5 }, (_, i) => `lock${pad(i + 1, 2)}@eshop.com`);
+const users = Array.from({ length: USER_COUNT }, (_, i) => `quang_u${String(i + 1).padStart(3, "0")}@eshop.com`);
 
 async function post(url, body) {
   const res = await fetch(BASE_URL + url, {
@@ -22,7 +20,8 @@ async function post(url, body) {
   return { status: res.status, body: await res.json().catch(() => null) };
 }
 
-const login = (email, password) => post("/api/login", { email, password });
+const login = (email) => post("/api/login", { email, password: PASSWORD });
+const getJson = async (url) => (await fetch(BASE_URL + url)).json();
 
 function writeCsv(file, header, rows) {
   const lines = [header, ...rows.map((r) => r.join(","))];
@@ -33,37 +32,36 @@ function writeCsv(file, header, rows) {
 async function main() {
   // /api/register không kiểm tra email trùng, nên login thử trước, chỉ đăng ký khi chưa có.
   let created = 0, existed = 0;
-  for (const email of [...mainUsers, ...lockUsers]) {
-    // 401 = chưa có user (mật khẩu luôn đúng); 403 = user có nhưng đang bị khóa.
-    if ((await login(email, PASSWORD)).status !== 401) { existed++; continue; }
+  for (const email of users) {
+    // 401 = chưa có user (mật khẩu luôn đúng); 200/403 = user đã có.
+    if ((await login(email)).status !== 401) { existed++; continue; }
     const r = await post("/api/register", { name: email.split("@")[0], email, password: PASSWORD });
     if (r.status !== 200) throw new Error(`Đăng ký ${email} lỗi: ${r.status}`);
     created++;
   }
 
-  // Xác nhận lại: mọi user phải login được (lock user cũng login được trước khi test sai mật khẩu).
+  // Xác nhận lại: cả 200 user phải login được.
   const failed = [];
-  for (const email of [...mainUsers, ...lockUsers]) {
-    const r = await login(email, PASSWORD);
-    if (r.status !== 200) failed.push(`${email} (${r.status})`);
+  for (const email of users) {
+    const r = await login(email);
+    if (r.status !== 200 || !r.body?.token) failed.push(`${email} (${r.status})`);
   }
 
-  const products = await (await fetch(BASE_URL + "/api/products")).json();
-  // Keyword = từ dài nhất trong tên sản phẩm (iPhone, Samsung, MacBook...), cộng vài keyword không có kết quả.
-  const keywords = [...new Set(products.map((p) => p.name.split(" ").sort((a, b) => b.length - a.length)[0]))];
-  keywords.push("Pro", "Nokia", "xyz123");
+  // Chỉ lấy category có sản phẩm, để bước "chọn sản phẩm theo category" luôn tìm được id.
+  const categories = await getJson("/api/categories");
+  const products = await getJson("/api/products");
+  const usedCategories = categories.filter((c) => products.some((p) => p.category_id === c.id));
 
   fs.mkdirSync(DATA_DIR, { recursive: true });
   console.log("Ghi file CSV:");
-  writeCsv("users.csv", "email,password", mainUsers.map((e) => [e, PASSWORD]));
-  writeCsv("lockout-users.csv", "email,wrong_password", lockUsers.map((e) => [e, WRONG_PASSWORD]));
-  writeCsv("keywords.csv", "keyword", keywords.map((k) => [k]));
-  writeCsv("products.csv", "product_id,name,price", products.map((p) => [p.id, `"${p.name}"`, p.price]));
-  // Chỉ dùng coupon fixed: percent (SAVE10) tính sai discount. total_amount phải > min_order_amount (so sánh >).
-  writeCsv("coupons.csv", "code,total_amount", [["VIP100", 600000], ["BIGBUY", 600000]]);
+  writeCsv("users.csv", "email,password", users.map((e) => [e, PASSWORD]));
+  writeCsv("categories.csv", "category_id,category_name", usedCategories.map((c) => [c.id, c.name]));
+  // Chỉ dùng coupon fixed: SAVE10 (percent) tính discount âm, EXPIRED đã hết hạn.
+  // total_amount phải > min_order_amount (backend so sánh >): VIP100 min 300000, BIGBUY min 500000.
+  writeCsv("coupons.csv", "coupon_code,total_amount", [["VIP100", 600000], ["BIGBUY", 600000]]);
 
-  console.log(`\nTóm tắt: tạo mới ${created}, đã có ${existed}, login OK ${205 - failed.length}/205`);
-  console.log(`Sản phẩm: ${products.length}, keyword: ${keywords.length}`);
+  console.log(`\nTóm tắt: tạo mới ${created}, đã có ${existed}, login OK ${USER_COUNT - failed.length}/${USER_COUNT}`);
+  console.log(`Category có sản phẩm: ${usedCategories.length}/${categories.length}, sản phẩm: ${products.length}`);
   if (failed.length) {
     console.log("Login lỗi:", failed.join(", "));
     process.exit(1);
