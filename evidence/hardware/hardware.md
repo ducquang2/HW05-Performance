@@ -15,4 +15,4 @@ Máy chạy cả backend EShop và JMeter (cùng một máy).
 | JMeter | 5.6.3 |
 | Database | SQLite (file, driver `sqlite3`) |
 
-Ảnh chụp: `evidence/hardware-fastfetch.png` (chạy `fastfetch` hoặc `neofetch`, thấy rõ hostname).
+Ảnh chụp: `evidence/hardware/hardware-fastfetch.png` (chạy `fastfetch` hoặc `neofetch`, thấy rõ hostname).
