@@ -103,3 +103,55 @@ bash scripts/reset-state.sh
 jmeter -n -t testplans/20120359_Load_20261123.jmx -q user.properties \
        -l results/20120359_Load_20261123.jtl -e -o reports/20120359_Load_20261123_html
 ```
+
+## 6. Thông số Stress
+
+Mục tiêu: tăng tải từng bậc tới khi hệ thống gãy (lỗi tăng hoặc p95 tăng vọt). Không có plugin Stepping Thread Group nên dựng bằng **10 Thread Group thường**, mỗi nhóm là 1 bậc: cùng số VU, vào trễ dần (startup delay) và **cùng kết thúc** ở giây 600.
+
+| Thread Group | VU | Startup delay | Duration | Ramp | Số VU đang chạy |
+|---|---|---|---|---|---|
+| Stress bậc 01 | 20 | 0 s | 600 s | 5 s | 20 |
+| Stress bậc 02 | 20 | 60 s | 540 s | 5 s | 40 |
+| Stress bậc 03 | 20 | 120 s | 480 s | 5 s | 60 |
+| ... | ... | ... | ... | ... | ... |
+| Stress bậc 10 | 20 | 540 s | 60 s | 5 s | 200 |
+
+Công thức trong plan: bậc `i` (0..9) có delay = `i * step_secs`, duration = `(10 - i) * step_secs`, viết bằng `${__jexl3(...)}` quanh `${__P(step_secs,60)}`.
+
+| Thông số | Giá trị | Property | Lý do |
+|---|---|---|---|
+| Bước tăng | +20 VU | `step_users=20` | Theo gợi ý 2.2. Load 30 VU chạy rất nhẹ (smoke 5 VU p95 ≤ 8 ms) nên bậc 20 đủ lớn để thấy thay đổi mà vẫn đủ nhiều bậc để chỉ ra điểm gãy ở khoảng nào. |
+| Thời gian mỗi bậc | 60 s | `step_secs=60` | Mỗi VU 1 vòng khoảng 5 s, 60 s là ~10 vòng/VU, đủ sample để tính p95 của từng bậc. |
+| Ramp mỗi bậc | 5 s | `step_ramp=5` | 20 VU vào trong 5 s (4 VU/s), không dồn 20 lệnh login (có ghi DB) vào cùng 1 ms, nhưng vẫn là bậc rõ ràng. |
+| Mức trần | **200 VU** (10 bậc) | | `users.csv` chỉ có 200 tài khoản. Trên 200 thì nhiều VU login cùng tài khoản cùng lúc, kết quả lẫn lỗi dữ liệu. 200 thread JMeter vẫn nhẹ với máy 16 GB. |
+| Think-time | 0,5–1 s | Uniform Random Timer 500 + 500 ms | Ngắn hơn Load (1–3 s) để mỗi VU tạo nhiều request hơn. Vẫn khác 0 cho giống người dùng thật. |
+| Tổng thời gian | **600 s = 10 phút** | | 10 bậc x 60 s. Bậc 200 VU chỉ giữ 60 s. |
+
+Ước lượng: 1 vòng ≈ 7 x 0,75 s = 5,25 s, 8 request/vòng → 20 VU ≈ 30 req/s, 200 VU ≈ 300 req/s.
+
+**Cách nhận biết điểm gãy:** trong HTML report xem cùng lúc *Active Threads Over Time*, *Response Time Percentiles Over Time* và *Transactions Per Second*. Điểm gãy là bậc đầu tiên có một trong các dấu hiệu:
+- tỉ lệ lỗi > 1% (lỗi tải: 5xx, `Non HTTP response code` timeout/connection refused);
+- p95 của bậc tăng vọt so với bậc trước (ví dụ gấp nhiều lần, hoặc vượt 1 s);
+- VU tăng mà throughput không tăng nữa (hệ thống đã bão hòa, request chỉ xếp hàng).
+
+Nếu tới 200 VU vẫn không có dấu hiệu nào thì kết luận là "không gãy trong phạm vi 200 VU" (giới hạn bởi số tài khoản), không cố tăng tiếp. Aggregate Report là số tổng cả lượt; muốn số của từng bậc thì lọc `.jtl` theo khoảng thời gian 60 s của bậc đó.
+
+Chạy thử nhỏ: `-Jstep_users=2 -Jstep_secs=10 -Jstep_ramp=2` (100 giây, 2 → 20 VU).
+
+## 8. Lockout khi chạy Stress/Spike
+
+- Luồng tải chỉ dùng mật khẩu đúng nên không tự khóa tài khoản. Vẫn kiểm tra vì tải cao.
+- Plan Stress/Spike có thêm assertion **"Không bị khóa (403 lockout)"** ở bước login, đặt trước `Assert HTTP 200`. Nếu body login có "bị khóa" thì `.jtl` ghi `failureMessage` = `LOCKOUT 403: tài khoản ... bị khóa - lỗi dữ liệu, không phải lỗi tải`. Đã thử khóa `quang_u001`, `quang_u002` bằng SQL rồi chạy: `.jtl` ghi đúng message LOCKOUT.
+- Không lấy mã 403 làm dấu hiệu lockout: middleware token (`server.js:106`) cũng trả `403 Forbidden` khi token sai. Một lần login bị khóa sẽ kéo theo 403 Forbidden ở bước 2/6/8 của vòng đó (token `NOT_FOUND`), nên khi đếm lỗi thì nhóm theo message LOCKOUT ở bước 1, các 403 Forbidden cùng vòng là hệ quả, không phải lỗi tải.
+- Lỗi tải là: 5xx, `Non HTTP response code` (timeout, connection refused/reset), hoặc request chậm vượt response timeout 30 s.
+- Trước mỗi lượt: `bash scripts/reset-state.sh`. Sau mỗi lượt chạy lại script này: dòng `Trước reset - đang khóa: X` cho biết lượt vừa rồi có khóa user nào không (dòng "còn khóa" phía dưới in sau khi mở khóa nên luôn là 0).
+
+## 9. Lệnh chạy chính thức Stress/Spike
+
+```bash
+bash scripts/reset-state.sh
+jmeter -n -t testplans/20120359_Stress_20261123.jmx -q user.properties \
+       -l results/20120359_Stress_20261123.jtl -e -o reports/20120359_Stress_20261123_html
+bash scripts/reset-state.sh   # xem dòng "Trước reset - đang khóa"
+
+```

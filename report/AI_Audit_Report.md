@@ -60,3 +60,18 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Chạy thử `-Jthreads=5 -Jrampup=10 -Jduration=60`: 155 request, 0 lỗi, đủ 8 bước. Tự thử trường hợp sai (filter category `!=`, id sản phẩm không tồn tại) để chắc assertion bắt được lỗi.
   - Lỗi của bản đầu đã sửa (ghi chi tiết ở `notes/review-testplans.md`): timer nằm trong Transaction Controller làm sinh sample transaction 0 ms khi hết giờ; 2 JSON Assertion trên cùng request làm mất failure message trong `.jtl`.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 5 – Bước 2: sinh test plan Stress `20120359_Stress_20261123.jmx`
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-23 22:50
+- Mục đích: Sinh test plan Stress tìm điểm gãy cho W2 bằng Thread Group có sẵn, tránh khóa tài khoản và tách lỗi lockout khỏi lỗi tải.
+- Prompt của tôi:
+  > Dựa trên plan Load W2 đã chạy thông (5 VU p95 dưới 10 ms), sinh 20120359_Stress_20261123.jmx để tìm điểm gãy: tăng bậc VU đều theo thời gian chỉ bằng Thread Group có sẵn, think-time ngắn hơn Load, listener Aggregate Report. Giải thích bậc tăng, mức trần và cách nhận biết điểm gãy. Lưu ý tránh làm khóa tài khoản và phân biệt lỗi 403 lockout với lỗi tải.
+- Output của AI (tóm tắt):
+  - `testplans/20120359_Stress_20261123.jmx`: giữ nguyên 8 bước, extractor, header và assertion của plan Load; 10 Thread Group "Stress bậc 01..10", mỗi nhóm `${__P(step_users,20)}` VU, ramp `${__P(step_ramp,5)}` s, delay `i*step_secs`, duration `(10-i)*step_secs` (`step_secs=60`) để mọi bậc cùng kết thúc ở giây 600; think-time 0,5–1 s; listener Aggregate Report.
+  - Mục "6. Thông số Stress" trong `notes/workflow-w2.md`: +20 VU mỗi 60 s, trần 200 VU vì `users.csv` chỉ có 200 tài khoản, tổng 10 phút; điểm gãy là bậc đầu tiên có lỗi > 1%, p95 tăng vọt, hoặc throughput không tăng theo VU.
+  - Lockout: thêm assertion "Không bị khóa (403 lockout)" ở bước login (ghi message `LOCKOUT 403 ...`), ghi chú 403 Forbidden ở bước có token là do token sai chứ không phải lockout (mục 8). Thêm dòng in số user đang khóa **trước** khi mở khóa vào `scripts/reset-state.sh` (dòng cũ in sau khi mở khóa nên luôn 0).
+  - Chạy thử `-Jstep_users=2 -Jstep_secs=10 -Jstep_ramp=2`: 1637 request trong 100 s, 0 lỗi, đủ 8 bước, số thread tăng 2 → 20 theo bậc. Thử khóa 2 user bằng SQL: `.jtl` ghi đúng message LOCKOUT.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+

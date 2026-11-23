@@ -15,6 +15,8 @@ sql() { sqlite3 -cmd ".timeout 5000" "$DB" "$1"; } # chờ tối đa 5s nếu ba
 
 echo "Reset lúc: $(date '+%Y-%m-%d %H:%M:%S')"
 
+# In trạng thái khóa TRƯỚC khi mở, để biết lượt chạy vừa rồi có làm khóa user nào không (dòng "còn khóa" bên dưới luôn 0 vì in sau khi mở)
+sql "SELECT 'Trước reset - đang khóa: ' || SUM(locked_until IS NOT NULL) || ', login_attempts > 0: ' || SUM(login_attempts > 0) FROM users;"
 sql "UPDATE users SET login_attempts = 0, locked_until = NULL;" || exit 1
 sql "DELETE FROM orders WHERE user_id IN (SELECT id FROM users WHERE email LIKE 'quang\_u%' ESCAPE '\');
       DELETE FROM coupon_usage WHERE user_id IN (SELECT id FROM users WHERE email LIKE 'quang\_u%' ESCAPE '\');" || exit 1
