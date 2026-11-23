@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
 <hashTree>
-<TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="20120359_Spike_20261123 - W2 Browse &amp; Coupon">
-  <stringProp name="TestPlan.comments">Spike W2: nền base_users VU suốt total_secs giây; nhóm spike spike_users VU vào ở giây spike_delay, ramp spike_ramp giây, chạy spike_secs giây rồi dừng hết. Chạy thử: -Jbase_users=2 -Jspike_users=10 -Jspike_delay=20 -Jspike_secs=30 -Jtotal_secs=80</stringProp>
+<TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="20120359_Spike_20261124 - W2 Browse &amp; Coupon">
+  <stringProp name="TestPlan.comments">Spike W2: nền base_users VU suốt total_secs giây; nhóm spike spike_users VU vào ở giây spike_delay, ramp spike_ramp giây, chạy spike_secs giây rồi dừng hết. Think 0-100 ms như Stress. Chạy thử: -Jbase_users=5 -Jspike_users=40 -Jspike_delay=15 -Jspike_secs=20 -Jtotal_secs=60</stringProp>
   <boolProp name="TestPlan.functional_mode">false</boolProp>
   <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
   <elementProp name="TestPlan.user_defined_variables" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
@@ -71,10 +71,10 @@
     <boolProp name="LoopController.continue_forever">false</boolProp>
     <intProp name="LoopController.loops">-1</intProp>
   </elementProp>
-  <stringProp name="ThreadGroup.num_threads">${__P(base_users,10)}</stringProp>
+  <stringProp name="ThreadGroup.num_threads">${__P(base_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(base_ramp,10)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__P(total_secs,270)}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__P(total_secs,210)}</stringProp>
   <stringProp name="ThreadGroup.delay">0</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
@@ -126,14 +126,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -174,14 +174,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -216,14 +216,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -266,14 +266,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -323,14 +323,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -373,14 +373,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -439,14 +439,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -496,10 +496,10 @@
     <boolProp name="LoopController.continue_forever">false</boolProp>
     <intProp name="LoopController.loops">-1</intProp>
   </elementProp>
-  <stringProp name="ThreadGroup.num_threads">${__P(spike_users,150)}</stringProp>
+  <stringProp name="ThreadGroup.num_threads">${__P(spike_users,400)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(spike_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__P(spike_secs,95)}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__P(spike_secs,65)}</stringProp>
   <stringProp name="ThreadGroup.delay">${__P(spike_delay,60)}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
@@ -551,14 +551,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -599,14 +599,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -641,14 +641,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -691,14 +691,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -748,14 +748,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -798,14 +798,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>
@@ -864,14 +864,14 @@
 <hashTree></hashTree>
 </hashTree>
 </hashTree>
-<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0.5-1s">
+<TestAction guiclass="TestActionGui" testclass="TestAction" testname="Think 0-100ms (property think_min, think_range)">
   <intProp name="ActionProcessor.action">1</intProp>
   <intProp name="ActionProcessor.target">0</intProp>
   <stringProp name="ActionProcessor.duration">0</stringProp>
 </TestAction>
-<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0.5-1s">
-  <stringProp name="ConstantTimer.delay">500</stringProp>
-  <stringProp name="RandomTimer.range">500</stringProp>
+<hashTree><UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think 0-100ms (property think_min, think_range)">
+  <stringProp name="ConstantTimer.delay">${__P(think_min,0)}</stringProp>
+  <stringProp name="RandomTimer.range">${__P(think_range,100)}</stringProp>
 </UniformRandomTimer>
 <hashTree></hashTree>
 </hashTree>

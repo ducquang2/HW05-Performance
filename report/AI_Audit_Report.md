@@ -104,3 +104,19 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Chạy thử `-Jstep_users=10 -Jstep_secs=10` (100 s, 10 → 100 VU): 108.509 sample, 0 lỗi, đủ 8 bước, req/s tăng đều 158 → 2.007 theo bậc, p95 2–3 ms.
   - Ghi thêm 1 dòng vào `notes/review-testplans.md`: AI chọn think 0,5–1 s và trần 200 VU theo gợi ý chung, không biết SUT chỉ mất ~1 ms/request.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 8 – Bước 2: rút bậc Stress, chỉnh Spike vượt ngưỡng, đổi tên plan sang 20261124
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-24 00:18
+- Mục đích: Sau lượt chạy thử Stress full tới 500 VU: giảm dung lượng `.jtl` mà vẫn thấy điểm gãy, cho Spike vượt ngưỡng vừa đo, đổi tên plan theo ngày chạy chính thức.
+- Prompt của tôi:
+  > Chạy thử Stress tới 500 VU thấy throughput đi ngang từ 450 VU (8577 → 8725 req/s), p95 tăng 8 → 19 ms, 0 lỗi, RAM node 50 → 212 MB, file .jtl 903 MB. Rút ngắn mỗi bậc Stress để file nhỏ lại mà vẫn thấy điểm gãy, và chỉnh Spike cho đỉnh vượt ngưỡng khoảng 400 VU vừa tìm được, có giai đoạn hồi phục. Đổi tên plan theo ngày chạy chính thức 20261124.
+- Output của AI (tóm tắt):
+  - Đổi tên bằng `git mv`: `20120359_{Load,Stress,Spike}_20261123.jmx` → `..._20261124.jmx`, sửa testname trong plan và tên file trong `notes/workflow-w2.md`, `notes/review-testplans.md`. Các mục audit Lần 1–7 giữ tên cũ (lịch sử). Load chỉ đổi testname.
+  - Stress: `step_secs` mặc định 60 → **30 s**, vẫn 10 bậc +50 VU tới 500 VU, think 0–100 ms, tổng 5 phút. Mỗi bậc 30 s vẫn ~190k–260k request ở bậc 300–500 VU, đủ tính p95; `.jtl` ước ~450 MB raw / ~25 MB nén. Ghi bảng kết quả 5 bậc cuối và điểm gãy ~400 VU vào mục 6.
+  - Spike: think đọc từ property, mặc định 0–100 ms như Stress; nền 50 VU suốt 210 s; đỉnh +400 VU (tổng 450) ramp 5 s ở giây 60, giữ 60 s, 85 s hồi phục chỉ có nền; tổng 3,5 phút; vẫn View Results Tree Errors only.
+  - `.gitignore` thêm `results/*.jtl` và `reports/`, README thêm 1 dòng lý do (quá lớn cho GitHub, nộp trong zip).
+  - Chạy thử Stress `-Jstep_users=10 -Jstep_secs=10`: 113.284 sample, 0 lỗi, đủ 8 bước, VU 10 → 100 mỗi 10 s, req/s 165 → 2.061. Spike `-Jbase_users=5 -Jspike_users=40 -Jspike_delay=15 -Jspike_secs=20 -Jtotal_secs=60`: 20.986 sample, 0 lỗi, số thread 5 → 45 → 5.
+  - Thêm 2 dòng vào `notes/review-testplans.md`: Stress bậc 60 s làm `.jtl` 903 MB; Spike cũ 160 VU think 0,5–1 s gần như không tạo áp lực.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_

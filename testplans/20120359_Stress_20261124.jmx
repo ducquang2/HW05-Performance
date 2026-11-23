@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
 <hashTree>
-<TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="20120359_Stress_20261123 - W2 Browse &amp; Coupon">
-  <stringProp name="TestPlan.comments">Stress W2: 10 bậc, mỗi bậc +step_users VU (mặc định 50) sau mỗi step_secs giây (mặc định 60), trần 500 VU. Think-time think_min + ngẫu nhiên think_range ms (mặc định 0-100 ms). Chạy thử: -Jstep_users=10 -Jstep_secs=10</stringProp>
+<TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="20120359_Stress_20261124 - W2 Browse &amp; Coupon">
+  <stringProp name="TestPlan.comments">Stress W2: 10 bậc, mỗi bậc +step_users VU (mặc định 50) sau mỗi step_secs giây (mặc định 30), trần 500 VU. Think-time think_min + ngẫu nhiên think_range ms (mặc định 0-100 ms). Chạy thử: -Jstep_users=10 -Jstep_secs=10</stringProp>
   <boolProp name="TestPlan.functional_mode">false</boolProp>
   <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
   <elementProp name="TestPlan.user_defined_variables" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
@@ -74,8 +74,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(10*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(0*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(10*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(0*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -499,8 +499,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(9*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(1*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(9*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(1*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -924,8 +924,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(8*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(2*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(8*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(2*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -1349,8 +1349,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(7*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(3*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(7*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(3*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -1774,8 +1774,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(6*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(4*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(6*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(4*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -2199,8 +2199,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(5*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(5*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(5*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(5*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -2624,8 +2624,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(4*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(6*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(4*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(6*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -3049,8 +3049,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(3*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(7*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(3*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(7*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -3474,8 +3474,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(2*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(8*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(2*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(8*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">
@@ -3899,8 +3899,8 @@
   <stringProp name="ThreadGroup.num_threads">${__P(step_users,50)}</stringProp>
   <stringProp name="ThreadGroup.ramp_time">${__P(step_ramp,5)}</stringProp>
   <boolProp name="ThreadGroup.scheduler">true</boolProp>
-  <stringProp name="ThreadGroup.duration">${__jexl3(1*${__P(step_secs,60)})}</stringProp>
-  <stringProp name="ThreadGroup.delay">${__jexl3(9*${__P(step_secs,60)})}</stringProp>
+  <stringProp name="ThreadGroup.duration">${__jexl3(1*${__P(step_secs,30)})}</stringProp>
+  <stringProp name="ThreadGroup.delay">${__jexl3(9*${__P(step_secs,30)})}</stringProp>
   <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
 </ThreadGroup>
 <hashTree><TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="01_Login">

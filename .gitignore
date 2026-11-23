@@ -1,3 +1,5 @@
 .DS_Store
 jmeter.log
 node_modules/
+results/*.jtl
+reports/

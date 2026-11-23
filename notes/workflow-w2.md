@@ -100,23 +100,23 @@ Chạy chính thức (từ root repo, reset trước):
 
 ```bash
 bash scripts/reset-state.sh
-jmeter -n -t testplans/20120359_Load_20261123.jmx -q user.properties \
-       -l results/20120359_Load_20261123.jtl -e -o reports/20120359_Load_20261123_html
+jmeter -n -t testplans/20120359_Load_20261124.jmx -q user.properties \
+       -l results/20120359_Load_20261124.jtl -e -o reports/20120359_Load_20261124_html
 ```
 
 ## 6. Thông số Stress
 
-Mục tiêu: tăng tải từng bậc tới khi hệ thống gãy (lỗi tăng hoặc p95 tăng vọt). Không có plugin Stepping Thread Group nên dựng bằng **10 Thread Group thường**, mỗi nhóm là 1 bậc: cùng số VU, vào trễ dần (startup delay) và **cùng kết thúc** ở giây 600.
+Mục tiêu: tăng tải từng bậc tới khi hệ thống gãy (lỗi tăng hoặc p95 tăng vọt). Không có plugin Stepping Thread Group nên dựng bằng **10 Thread Group thường**, mỗi nhóm là 1 bậc: cùng số VU, vào trễ dần (startup delay) và **cùng kết thúc** ở giây 300.
 
 | Thread Group | VU | Startup delay | Duration | Ramp | Số VU đang chạy |
 |---|---|---|---|---|---|
-| Stress bậc 01 | 50 | 0 s | 600 s | 5 s | 50 |
-| Stress bậc 02 | 50 | 60 s | 540 s | 5 s | 100 |
-| Stress bậc 03 | 50 | 120 s | 480 s | 5 s | 150 |
+| Stress bậc 01 | 50 | 0 s | 300 s | 5 s | 50 |
+| Stress bậc 02 | 50 | 30 s | 270 s | 5 s | 100 |
+| Stress bậc 03 | 50 | 60 s | 240 s | 5 s | 150 |
 | ... | ... | ... | ... | ... | ... |
-| Stress bậc 10 | 50 | 540 s | 60 s | 5 s | 500 |
+| Stress bậc 10 | 50 | 270 s | 30 s | 5 s | 500 |
 
-Công thức trong plan: bậc `i` (0..9) có delay = `i * step_secs`, duration = `(10 - i) * step_secs`, viết bằng `${__jexl3(...)}` quanh `${__P(step_secs,60)}`.
+Công thức trong plan: bậc `i` (0..9) có delay = `i * step_secs`, duration = `(10 - i) * step_secs`, viết bằng `${__jexl3(...)}` quanh `${__P(step_secs,30)}`.
 
 ### Vì sao đổi thông số (sau khi chạy thử full-size)
 
@@ -127,11 +127,11 @@ Chạy dò thêm với think 0–100 ms, +20 VU/20 s tới 200 VU: vẫn không 
 | Thông số | Cũ | Mới | Property | Lý do |
 |---|---|---|---|---|
 | Bước tăng | +20 VU | **+50 VU** | `step_users=50` | +20 VU chỉ thêm ~7% CPU node mỗi bậc, 10 bậc không tới giới hạn. +50 VU ≈ +1.000 req/s, +17% CPU mỗi bậc. |
-| Thời gian mỗi bậc | 60 s | 60 s | `step_secs=60` | Giữ nguyên: mỗi VU 1 vòng ~0,4 s nên 60 s đủ nhiều sample để tính p95 từng bậc. |
+| Thời gian mỗi bậc | 60 s | 60 s, sau đó **30 s** | `step_secs=30` | Lúc này giữ 60 s. Sau lượt chạy full 500 VU rút còn 30 s vì `.jtl` quá lớn (mục "Rút bậc còn 30 s" bên dưới). |
 | Ramp mỗi bậc | 5 s | 5 s | `step_ramp=5` | Giữ nguyên, 10 VU/s, bậc vẫn rõ ràng. |
 | Mức trần | 200 VU | **500 VU** (10 bậc) | | Gấp ~1,7 lần mức dự đoán gãy (~300 VU). `users.csv` tăng lên 500 tài khoản (`node scripts/setup-users.js 500`) để mỗi VU vẫn 1 tài khoản riêng. |
-| Think-time | 0,5–1 s | **0–100 ms** | `think_min=0`, `think_range=100` (Uniform Random Timer `${__P(think_min,0)}` + `${__P(think_range,100)}`) | Stress cần đẩy SUT tới giới hạn, không mô phỏng người dùng thật. Think dài thì phải cần hàng nghìn VU mới đủ tải. Load vẫn giữ 1–3 s (tải bình thường), Spike giữ 0,5–1 s. |
-| Tổng thời gian | 600 s | 600 s = 10 phút | | 10 bậc x 60 s. |
+| Think-time | 0,5–1 s | **0–100 ms** | `think_min=0`, `think_range=100` (Uniform Random Timer `${__P(think_min,0)}` + `${__P(think_range,100)}`) | Stress cần đẩy SUT tới giới hạn, không mô phỏng người dùng thật. Think dài thì phải cần hàng nghìn VU mới đủ tải. Load vẫn giữ 1–3 s (tải bình thường). Spike sau đó cũng đổi sang 0–100 ms (mục 7). |
+| Tổng thời gian | 600 s | 600 s, sau đó **300 s = 5 phút** | | 10 bậc x 30 s. |
 
 Ước lượng: 1 vòng ≈ 7 x 50 ms think + 8 x ~1 ms ≈ 0,36–0,4 s, 8 request/vòng → ~20 req/s mỗi VU. Nếu không gãy thì 300 VU ≈ 6.000 req/s, 500 VU ≈ 10.000 req/s; thực tế node sẽ bão hòa trước đó.
 
@@ -142,37 +142,59 @@ Chạy dò thêm với think 0–100 ms, +20 VU/20 s tới 200 VU: vẫn không 
 - p95 của bậc tăng vọt so với bậc trước (ví dụ từ vài ms lên hàng chục/hàng trăm ms, hoặc vượt 1 s);
 - VU tăng mà throughput không tăng nữa (đường req/s đi ngang, mất quan hệ ~20 req/s mỗi VU): node đã 100% CPU, request chỉ xếp hàng nên response time tăng theo.
 
-Với SUT này dấu hiệu thứ 3 dự kiến xuất hiện trước (throughput đi ngang + p95 tăng), lỗi chỉ xuất hiện khi hàng đợi dài tới mức timeout. Aggregate Report là số tổng cả lượt; số của từng bậc thì lọc `.jtl` theo khoảng 60 s của bậc đó (tính VU, req/s, p50/p95/p99, % lỗi cho từng khoảng).
+Với SUT này dấu hiệu thứ 3 dự kiến xuất hiện trước (throughput đi ngang + p95 tăng), lỗi chỉ xuất hiện khi hàng đợi dài tới mức timeout. Aggregate Report là số tổng cả lượt; số của từng bậc thì lọc `.jtl` theo khoảng 30 s của bậc đó (tính VU, req/s, p50/p95/p99, % lỗi cho từng khoảng).
 
 Nếu tới 500 VU vẫn không có dấu hiệu nào thì ghi là "không gãy trong phạm vi 500 VU" kèm CPU node lúc đó.
 
-Chạy thử nhỏ: `-Jstep_users=10 -Jstep_secs=10` (100 giây, 10 → 100 VU). Kết quả chạy thử: 108.509 sample, 0 lỗi, đủ 8 bước; mỗi 10 s số VU tăng 10 và req/s tăng đều 158 → 2.007 (≈ 20 req/s mỗi VU), p95 2–3 ms; khoảng nghỉ giữa 2 request cùng thread trung vị 48 ms, lớn nhất 117 ms (đúng think 0–100 ms đọc từ property).
+### Rút bậc còn 30 s (sau chạy full 500 VU, bậc 60 s)
+
+Kết quả 5 bậc cuối của lượt chạy full (10 bậc +50 VU/60 s, think 0–100 ms):
+
+| VU | req/s | p50 (ms) | p95 (ms) | p99 (ms) | Lỗi | CPU node |
+|---|---|---|---|---|---|---|
+| 300 | 6.257 | 1 | 3 | 12 | 0% | ~100% |
+| 350 | 7.196 | 1 | 5 | 25 | 0% | ~110% |
+| 400 | 7.969 | 2 | 8 | 33 | 0% | ~124% |
+| 450 | 8.577 | 5 | 12 | 43 | 0% | ~133% |
+| 500 | 8.725 | 8 | 19 | 58 | 0% | ~137% |
+
+Từ 450 VU throughput gần như đi ngang (8.577 → 8.725 req/s, +1,7% trong khi VU +11%) còn p95 tăng 8 → 19 ms → **điểm gãy khoảng 400–450 VU**, lấy **~400 VU** là ngưỡng (bậc cuối còn tăng throughput gần tuyến tính). Không có lỗi. RSS node tăng liên tục 50 → 212 MB (giỏ hàng trong RAM). JMeter (java) ăn 30–40% CPU.
+
+Vấn đề: file `.jtl` 903 MB (nén zip ~18 lần ≈ 50 MB), quá giới hạn 100 MB/file của GitHub và nặng cho file zip nộp. Vì vậy:
+
+- `step_secs` mặc định **30 s** (vẫn 10 bậc +50 VU tới 500, think 0–100 ms), tổng 5 phút.
+- Mỗi bậc 30 s vẫn đủ sample để tính p95: bậc 50 VU ~30k request, bậc 300–500 VU ~190k–260k request.
+- `.jtl` ước khoảng một nửa: **~450 MB raw / ~25 MB nén**. `.jtl` và HTML report không đưa lên GitHub (`.gitignore`), nộp trong file zip.
+
+Chạy thử nhỏ: `-Jstep_users=10 -Jstep_secs=10` (100 giây, 10 → 100 VU). Kết quả chạy thử (bản 30 s): 113.284 sample, 0 lỗi, đủ 8 bước, số sample transaction bằng số sample request; mỗi 10 s số VU tăng 10 (10, 20, ..., 100) và req/s tăng đều 165 → 2.061 (≈ 20 req/s mỗi VU), p95 2 ms. File `.jtl` 32 MB cho 113k sample (~290 byte mỗi request kèm dòng transaction).
 
 ## 7. Thông số Spike
 
-Mục tiêu: tải nền thấp, vọt lên đột ngột, giữ ngắn rồi về nền để xem hệ thống có hồi phục (p95 và lỗi về lại mức nền) không. Dựng bằng 2 Thread Group thường chạy song song.
+Mục tiêu: tải nền thấp, vọt lên đột ngột **vượt ngưỡng gãy ~400 VU** (mục 6), giữ ngắn rồi về nền để xem hệ thống có hồi phục (p95 và lỗi về lại mức nền) không. Dựng bằng 2 Thread Group thường chạy song song.
 
 | Thread Group | VU | Startup delay | Duration | Ramp | Ghi chú |
 |---|---|---|---|---|---|
-| Spike nền | 10 | 0 s | 270 s | 10 s | chạy suốt lượt |
-| Spike đỉnh | 150 | 60 s | 95 s | 5 s | vào ở giây 60, đủ 150 VU ở giây 65, dừng ở giây 155 |
+| Spike nền | 50 | 0 s | 210 s | 10 s | chạy suốt lượt |
+| Spike đỉnh | 400 | 60 s | 65 s | 5 s | vào ở giây 60, đủ 400 VU ở giây 65, dừng ở giây 125 |
 
-Hình dạng tải: 0–60 s: 10 VU → 60–65 s: vọt lên 160 VU → 65–155 s: giữ 160 VU (90 s) → 155–270 s: về 10 VU (115 s hồi phục).
+Hình dạng tải: 0–60 s: 50 VU → 60–65 s: vọt lên 450 VU → 65–125 s: giữ 450 VU (60 s) → 125–210 s: về 50 VU (85 s hồi phục).
 
 | Thông số | Giá trị | Property | Lý do |
 |---|---|---|---|
-| Nền | 10 VU | `base_users=10`, `base_ramp=10` | Tải thấp, có sẵn số p95 "bình thường" trong 60 s đầu để so sánh với lúc spike và lúc hồi phục. |
-| Đỉnh | +150 VU (tổng 160) | `spike_users=150` | Mức trên của gợi ý 100–150, gấp 16 lần nền nên đủ "sốc". Tổng 160 < 500 tài khoản trong `users.csv`. |
-| Ramp spike | 5 s | `spike_ramp=5` | 30 VU/s, đủ đột ngột (khác Stress tăng 20 VU mỗi phút). |
+| Nền | 50 VU | `base_users=50`, `base_ramp=10` | Bằng bậc 1 của Stress (~1.000 req/s, p95 ~2 ms), có sẵn số "bình thường" trong 60 s đầu để so với lúc spike và lúc hồi phục. |
+| Đỉnh | +400 VU (tổng 450) | `spike_users=400` | Tổng 450 vượt ngưỡng ~400 VU: ở Stress 450 VU throughput đã đi ngang (8.577 req/s), p95 12 ms, CPU node ~133%. Gấp 9 lần nền. Tổng 450 < 500 tài khoản trong `users.csv`. |
+| Ramp spike | 5 s | `spike_ramp=5` | 80 VU/s, đột ngột hơn nhiều so với Stress (+50 VU mỗi 30 s). |
 | Thời điểm spike | giây 60 | `spike_delay=60` | Đủ 60 s nền ổn định trước khi spike. |
-| Giữ spike | 90 s | `spike_secs=95` (= ramp 5 + giữ 90) | Trong khoảng 1–2 phút gợi ý: đủ thấy hệ thống chịu được hay bắt đầu lỗi, nhưng ngắn để vẫn là spike chứ không thành stress. Hết duration thì 150 VU dừng cùng lúc → tải rơi đột ngột về nền. |
-| Hồi phục | 115 s | `total_secs=270` | ≥ 60 s chỉ có nền để xem p95/lỗi có trở về mức của 60 s đầu không. |
-| Think-time | 0,5–1 s | Uniform Random Timer 500 + 500 ms | Giữ như bản đầu (Stress đã đổi sang 0–100 ms, xem mục 6). |
-| Tổng thời gian | **270 s = 4,5 phút** | | |
+| Giữ spike | 60 s | `spike_secs=65` (= ramp 5 + giữ 60) | Mức dưới của gợi ý 1–2 phút: đủ thấy hàng đợi dồn lên khi vượt ngưỡng nhưng vẫn là spike chứ không thành stress. Hết duration thì 400 VU dừng cùng lúc → tải rơi đột ngột về nền. |
+| Hồi phục | 85 s | `total_secs=210` | ≥ 60 s chỉ có nền để xem p95/lỗi có trở về mức của 60 s đầu không. |
+| Think-time | **0–100 ms** | `think_min=0`, `think_range=100` | Giống Stress để cùng mức áp lực, số VU so sánh trực tiếp được với ngưỡng 400 VU. Bản cũ 0,5–1 s với 160 VU chỉ ~240 req/s, quá xa giới hạn (xem `notes/review-testplans.md`). |
+| Tổng thời gian | **210 s = 3,5 phút** | | |
 
-Listener: View Results Tree cấu hình **Errors only** (chỉ giữ sample lỗi, không ghi file) để không làm chậm JMeter khi 160 VU. Khi chạy CLI (`-n`) listener GUI không có tác dụng, `.jtl` chính thức lấy từ `-l`; ảnh View Results Tree lấy bằng cách mở `.jtl` trong GUI hoặc chạy GUI tải nhỏ.
+Ước lượng `.jtl`: ~680k request (nền ~1.000 req/s suốt 210 s + thêm ~7.500 req/s trong ~62 s đỉnh) x ~290 byte ≈ **~200 MB raw / ~11 MB nén**.
 
-Chạy thử nhỏ: `-Jbase_users=2 -Jspike_users=10 -Jspike_delay=20 -Jspike_secs=30 -Jtotal_secs=80` (80 giây).
+Listener: View Results Tree cấu hình **Errors only** (chỉ giữ sample lỗi, không ghi file) để không làm chậm JMeter khi 450 VU. Khi chạy CLI (`-n`) listener GUI không có tác dụng, `.jtl` chính thức lấy từ `-l`; ảnh View Results Tree lấy bằng cách mở `.jtl` trong GUI hoặc chạy GUI tải nhỏ.
+
+Chạy thử nhỏ: `-Jbase_users=5 -Jspike_users=40 -Jspike_delay=15 -Jspike_secs=20 -Jtotal_secs=60` (60 giây). Kết quả: 20.986 sample, 0 lỗi, đủ 8 bước; số thread 5 → 45 → 5 (vọt lên ở giây ~15, về nền ở giây ~35), req/s ~100 → ~960 → ~105, p95 2–5 ms.
 
 ## 8. Lockout khi chạy Stress/Spike
 
@@ -186,12 +208,12 @@ Chạy thử nhỏ: `-Jbase_users=2 -Jspike_users=10 -Jspike_delay=20 -Jspike_se
 
 ```bash
 bash scripts/reset-state.sh
-jmeter -n -t testplans/20120359_Stress_20261123.jmx -q user.properties \
-       -l results/20120359_Stress_20261123.jtl -e -o reports/20120359_Stress_20261123_html
+jmeter -n -t testplans/20120359_Stress_20261124.jmx -q user.properties \
+       -l results/20120359_Stress_20261124.jtl -e -o reports/20120359_Stress_20261124_html
 bash scripts/reset-state.sh   # xem dòng "Trước reset - đang khóa"
 
 bash scripts/reset-state.sh
-jmeter -n -t testplans/20120359_Spike_20261123.jmx -q user.properties \
-       -l results/20120359_Spike_20261123.jtl -e -o reports/20120359_Spike_20261123_html
+jmeter -n -t testplans/20120359_Spike_20261124.jmx -q user.properties \
+       -l results/20120359_Spike_20261124.jtl -e -o reports/20120359_Spike_20261124_html
 bash scripts/reset-state.sh
 ```
