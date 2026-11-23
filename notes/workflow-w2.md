@@ -70,10 +70,36 @@ Cấu hình CSV Data Set Config trong JMeter:
 | `categories.csv` | All threads | True | False | Chỉ 3 dòng, quay vòng để các VU rải đều qua 3 category |
 | `coupons.csv` | All threads | True | False | 2 dòng, quay vòng VIP100/BIGBUY |
 
-Lưu ý về `users.csv`: CSV Data Set Config lấy dòng kế tiếp ở **mỗi vòng lặp**, nên vòng sau một VU có thể nhận tài khoản khác. Việc này không sao vì mỗi vòng đều login lại lấy token mới. Vì 200 dòng ≥ số VU đồng thời và các dòng được chia lần lượt, tại một thời điểm các VU gần như luôn dùng tài khoản khác nhau. Giỏ hàng có lẫn một chút cũng không làm checkout sai (checkout không đọc giỏ). Cách chốt cụ thể sẽ quyết định khi viết test plan ở Bước 2.
+Lưu ý về `users.csv`: CSV Data Set Config lấy dòng kế tiếp ở **mỗi vòng lặp**, nên vòng sau một VU có thể nhận tài khoản khác. Việc này không sao vì mỗi vòng đều login lại lấy token mới. Vì 200 dòng ≥ số VU đồng thời và các dòng được chia lần lượt, tại một thời điểm các VU gần như luôn dùng tài khoản khác nhau. Giỏ hàng có lẫn một chút cũng không làm checkout sai (checkout không đọc giỏ). Đã chốt trong test plan Load: `users.csv` để **All threads + Recycle True**. Không dùng `Current thread` vì khi đó mọi VU đọc cùng dòng đầu tiên (chung 1 tài khoản); không dùng Stop thread on EOF vì sau 200 vòng (khoảng 1,5 phút với 30 VU) test sẽ dừng sớm. Recycle an toàn vì mỗi vòng đều login lại bằng mật khẩu đúng, không ảnh hưởng lockout.
 
 ## 4. Reset giữa các lượt chạy
 
 `sh scripts/reset-state.sh` (chạy khi JMeter đã dừng): mở khóa mọi user, xóa `orders` và `coupon_usage` của user `quang_u*`, in giờ chạy, login thử `quang_u001`.
 
 Giỏ hàng nằm trong RAM backend, không có API xóa giỏ → chỉ xóa được bằng restart backend, mà restart thì DB bị reseed nên phải chạy lại `node scripts/setup-users.js`. Giỏ cũ không làm checkout lỗi (checkout không đọc giỏ) nhưng làm `GET /api/cart` và bộ nhớ process lớn dần, nên trước lượt chạy chính thức (nhất là soak) sẽ restart backend + chạy lại setup để số liệu RAM sạch.
+
+## 5. Thông số Load
+
+Máy: M2 Pro 10 nhân, 16 GB, backend Node + SQLite và JMeter chạy **cùng một máy** (xem `evidence/hardware/hardware.md`). Chỉ dùng Thread Group có sẵn (chưa cài plugin Custom Thread Groups).
+
+| Thông số | Giá trị | Property JMeter | Lý do |
+|---|---|---|---|
+| Số VU | **30** | `threads=30` | Nằm giữa khoảng 20–50 gợi ý. Load là tải "bình thường", không phải tìm điểm gãy. Node chạy 1 luồng event loop, SQLite chỉ 1 connection nên mọi lệnh ghi (login `UPDATE`, checkout `INSERT`) xếp hàng tuần tự; 30 VU vẫn để dư chỗ cho Stress tăng tiếp. JMeter 30 thread rất nhẹ so với 16 GB, ít tranh CPU với backend. `users.csv` có 200 tài khoản, dư cho 30 VU. |
+| Ramp-up | **90 giây** | `rampup=90` | Cứ 3 giây thêm 1 VU. Mỗi VU vào là login ngay (ghi DB), ramp chậm để không dồn 30 lệnh ghi cùng lúc ở giây đầu, giống người dùng vào dần. |
+| Giữ tải | **5 phút** (300 giây) | `duration=390` | Thread Group chỉ có 1 ô Duration tính từ lúc bắt đầu, nên `duration = ramp 90 + giữ 300 = 390` giây. 5 phút đủ để có vài nghìn sample cho số liệu ổn định; chạy dài 10–15 phút để dành cho soak (Bước 4). |
+| Think-time | **1–3 giây ngẫu nhiên** | Uniform Random Timer: constant 1000 ms + random 2000 ms | Người dùng thật đọc trang rồi mới bấm tiếp. Đặt trước mỗi bước 2–8 (7 lần, trung bình 2 giây) nên 1 vòng ≈ 14 giây. |
+| Vòng lặp | Vô hạn (Loop Count `-1`) | | Dừng theo Duration, không theo số vòng. |
+
+Ước lượng tải: 30 VU / ~14 giây mỗi vòng ≈ 2 vòng/giây ≈ **17 request/giây** (8 request mỗi vòng). Mức này máy chịu được thoải mái, đúng ý nghĩa Load.
+
+Chạy thử nhỏ trước khi chạy thật: `-Jthreads=5 -Jrampup=10 -Jduration=60`.
+
+Đường dẫn CSV trong plan là `${__P(datadir,../data)}/users.csv`. JMeter tính đường dẫn tương đối **theo thư mục chứa file .jmx** (`testplans/`), không theo thư mục đang đứng, nên `../data` đúng dù chạy lệnh từ đâu (đã thử chạy từ root repo và từ thư mục khác, đều đọc được CSV).
+
+Chạy chính thức (từ root repo, reset trước):
+
+```bash
+bash scripts/reset-state.sh
+jmeter -n -t testplans/20120359_Load_20261123.jmx -q user.properties \
+       -l results/20120359_Load_20261123.jtl -e -o reports/20120359_Load_20261123_html
+```

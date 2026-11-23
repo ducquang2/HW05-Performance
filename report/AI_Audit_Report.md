@@ -33,3 +33,30 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `scripts/reset-state.sh` (đổi tên từ `reset-lockout.sh`): mở khóa mọi user, xóa orders và coupon_usage của `quang_u*`, in giờ, login thử `quang_u001`. Giỏ hàng chỉ xóa được bằng restart backend (không có API xóa giỏ), restart thì phải chạy lại setup.
   - Đã chạy thật: setup tạo mới 200, chạy lần 2 báo "đã có 200" (không tạo trùng); reset mở khóa được user bị khóa và xóa được đơn test, login thử HTTP 200.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 3 – Bước 2: chọn thông số Load cho W2
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-23 22:13
+- Mục đích: Chọn số VU, ramp-up, thời gian giữ tải và think-time cho test Load, phù hợp với máy chạy chung backend và JMeter.
+- Prompt của tôi:
+  > Với máy M2 Pro 16GB chạy cả backend Node + SQLite lẫn JMeter, đề xuất thông số Load test cho workflow W2: số VU, ramp-up, thời gian giữ tải, think-time. Giải thích từng con số, chỉ dùng Thread Group có sẵn vì chưa cài plugin.
+- Output của AI (tóm tắt):
+  - Mục "5. Thông số Load" trong `notes/workflow-w2.md`: 30 VU, ramp-up 90 giây (3 giây/VU), giữ tải 5 phút, think-time 1–3 giây (Uniform Random Timer 1000 + 2000 ms) trước mỗi bước 2–8, lặp vô hạn dừng theo Duration.
+  - Lý do: Node 1 luồng + SQLite 1 connection nên lệnh ghi xếp hàng, 30 VU là tải bình thường và chừa chỗ cho Stress; ramp chậm để login (có ghi DB) không dồn cùng lúc; 5 phút đủ sample, dài hơn để dành cho soak.
+  - Vì Thread Group thường chỉ có 1 ô Duration nên đặt `duration = 90 + 300 = 390` giây. Ước lượng ~14 giây/vòng, ~17 request/giây.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 4 – Bước 2: sinh test plan Load `20120359_Load_20261123.jmx`
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-23 22:25
+- Mục đích: Sinh file test plan Load cho W2 theo cấu trúc mục 2.1, chạy thử với tải nhỏ và sửa đến khi chạy thông.
+- Prompt của tôi:
+  > Sinh file JMeter 20120359_Load_20261123.jmx cho workflow W2 theo cấu trúc: User Defined Variables, HTTP Request Defaults, Header Manager JSON, CSV Data Set Config cho users/categories/coupons, Transaction Controller cho từng bước, JSON Extractor token/product_id/final_amount, Authorization header, assertion status code và nội dung, Uniform Random Timer giữa các bước, listener Summary Report. Thông số tải đọc từ property để chạy thử nhỏ được. Chạy thử ngắn và sửa đến khi chạy thông.
+- Output của AI (tóm tắt):
+  - `testplans/20120359_Load_20261123.jmx`: UDV `HOST/PORT/PROTOCOL`, HTTP Request Defaults, Header `Content-Type: application/json`, 3 CSV Data Set Config (`${__P(datadir,../data)}`, All threads, recycle true), Thread Group `${__P(threads,30)}` / `${__P(rampup,90)}` / `${__P(duration,390)}` lặp vô hạn, 8 Transaction Controller `01_Login`..`08_Checkout`, JSON Extractor `token`, `product_id` (`$[?(@.category_id == ${category_id})].id`, match ngẫu nhiên), `price`, `final_amount`, `coupon_id`, header `Authorization: Bearer ${token}` ở bước 2, 6, 8, mỗi bước có assertion status 200 + nội dung, think-time 1–3 s giữa các bước, Summary Report (không ghi file).
+  - `user.properties` ở root repo: `.jtl` dạng CSV, không lưu response data, có failure message, latency, connect time, thread counts, bytes, sent bytes, URL.
+  - Chạy thử `-Jthreads=5 -Jrampup=10 -Jduration=60`: 155 request, 0 lỗi, đủ 8 bước. Tự thử trường hợp sai (filter category `!=`, id sản phẩm không tồn tại) để chắc assertion bắt được lỗi.
+  - Lỗi của bản đầu đã sửa (ghi chi tiết ở `notes/review-testplans.md`): timer nằm trong Transaction Controller làm sinh sample transaction 0 ms khi hết giờ; 2 JSON Assertion trên cùng request làm mất failure message trong `.jtl`.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
