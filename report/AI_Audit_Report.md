@@ -75,3 +75,16 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Chạy thử `-Jstep_users=2 -Jstep_secs=10 -Jstep_ramp=2`: 1637 request trong 100 s, 0 lỗi, đủ 8 bước, số thread tăng 2 → 20 theo bậc. Thử khóa 2 user bằng SQL: `.jtl` ghi đúng message LOCKOUT.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
 
+### Lần 6 – Bước 2: sinh test plan Spike `20120359_Spike_20261123.jmx`
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-23 22:50
+- Mục đích: Sinh test plan Spike cho W2: tải nền, tăng đột ngột, giữ ngắn, về nền để xem hồi phục.
+- Prompt của tôi:
+  > Sinh 20120359_Spike_20261123.jmx cho W2: tải nền thấp, vọt lên đột ngột trong vài giây, giữ ngắn rồi trở về nền để xem hệ thống hồi phục. Listener View Results Tree chỉ ghi lỗi. Giải thích vì sao chọn các mức và thời gian đó.
+- Output của AI (tóm tắt):
+  - `testplans/20120359_Spike_20261123.jmx`: cùng 8 bước và assertion lockout như Stress; Thread Group "Spike nền" 10 VU suốt 270 s; "Spike đỉnh" 150 VU, delay 60 s, ramp 5 s, duration 95 s; think-time 0,5–1 s; listener View Results Tree Errors only, không ghi file (chạy CLI thì listener GUI không tác dụng, `.jtl` lấy từ `-l`).
+  - Mục "7. Thông số Spike" trong `notes/workflow-w2.md`: 60 s nền → vọt lên 160 VU trong 5 s → giữ 90 s → 115 s chỉ có nền để xem hồi phục, tổng 4,5 phút; 160 < 200 tài khoản.
+  - Chạy thử `-Jbase_users=2 -Jspike_users=10 -Jspike_delay=20 -Jspike_secs=30 -Jtotal_secs=80`: 643 request, 0 lỗi, đủ 8 bước, số thread 2 → 12 → 2 đúng hình dạng. Thử nhanh 40 s ở mức 150 VU thật: 4238 request, 0 lỗi, max 76 ms.
+  - Lệnh chạy chính thức cả 2 plan ghi ở mục 9 của `notes/workflow-w2.md`.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_

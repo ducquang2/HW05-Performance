@@ -138,6 +138,32 @@ Nếu tới 200 VU vẫn không có dấu hiệu nào thì kết luận là "kh�
 
 Chạy thử nhỏ: `-Jstep_users=2 -Jstep_secs=10 -Jstep_ramp=2` (100 giây, 2 → 20 VU).
 
+## 7. Thông số Spike
+
+Mục tiêu: tải nền thấp, vọt lên đột ngột, giữ ngắn rồi về nền để xem hệ thống có hồi phục (p95 và lỗi về lại mức nền) không. Dựng bằng 2 Thread Group thường chạy song song.
+
+| Thread Group | VU | Startup delay | Duration | Ramp | Ghi chú |
+|---|---|---|---|---|---|
+| Spike nền | 10 | 0 s | 270 s | 10 s | chạy suốt lượt |
+| Spike đỉnh | 150 | 60 s | 95 s | 5 s | vào ở giây 60, đủ 150 VU ở giây 65, dừng ở giây 155 |
+
+Hình dạng tải: 0–60 s: 10 VU → 60–65 s: vọt lên 160 VU → 65–155 s: giữ 160 VU (90 s) → 155–270 s: về 10 VU (115 s hồi phục).
+
+| Thông số | Giá trị | Property | Lý do |
+|---|---|---|---|
+| Nền | 10 VU | `base_users=10`, `base_ramp=10` | Tải thấp, có sẵn số p95 "bình thường" trong 60 s đầu để so sánh với lúc spike và lúc hồi phục. |
+| Đỉnh | +150 VU (tổng 160) | `spike_users=150` | Mức trên của gợi ý 100–150, gấp 16 lần nền nên đủ "sốc". Tổng 160 < 200 tài khoản trong `users.csv`. |
+| Ramp spike | 5 s | `spike_ramp=5` | 30 VU/s, đủ đột ngột (khác Stress tăng 20 VU mỗi phút). |
+| Thời điểm spike | giây 60 | `spike_delay=60` | Đủ 60 s nền ổn định trước khi spike. |
+| Giữ spike | 90 s | `spike_secs=95` (= ramp 5 + giữ 90) | Trong khoảng 1–2 phút gợi ý: đủ thấy hệ thống chịu được hay bắt đầu lỗi, nhưng ngắn để vẫn là spike chứ không thành stress. Hết duration thì 150 VU dừng cùng lúc → tải rơi đột ngột về nền. |
+| Hồi phục | 115 s | `total_secs=270` | ≥ 60 s chỉ có nền để xem p95/lỗi có trở về mức của 60 s đầu không. |
+| Think-time | 0,5–1 s | Uniform Random Timer 500 + 500 ms | Giống Stress. |
+| Tổng thời gian | **270 s = 4,5 phút** | | |
+
+Listener: View Results Tree cấu hình **Errors only** (chỉ giữ sample lỗi, không ghi file) để không làm chậm JMeter khi 160 VU. Khi chạy CLI (`-n`) listener GUI không có tác dụng, `.jtl` chính thức lấy từ `-l`; ảnh View Results Tree lấy bằng cách mở `.jtl` trong GUI hoặc chạy GUI tải nhỏ.
+
+Chạy thử nhỏ: `-Jbase_users=2 -Jspike_users=10 -Jspike_delay=20 -Jspike_secs=30 -Jtotal_secs=80` (80 giây).
+
 ## 8. Lockout khi chạy Stress/Spike
 
 - Luồng tải chỉ dùng mật khẩu đúng nên không tự khóa tài khoản. Vẫn kiểm tra vì tải cao.
@@ -154,4 +180,8 @@ jmeter -n -t testplans/20120359_Stress_20261123.jmx -q user.properties \
        -l results/20120359_Stress_20261123.jtl -e -o reports/20120359_Stress_20261123_html
 bash scripts/reset-state.sh   # xem dòng "Trước reset - đang khóa"
 
+bash scripts/reset-state.sh
+jmeter -n -t testplans/20120359_Spike_20261123.jmx -q user.properties \
+       -l results/20120359_Spike_20261123.jtl -e -o reports/20120359_Spike_20261123_html
+bash scripts/reset-state.sh
 ```
