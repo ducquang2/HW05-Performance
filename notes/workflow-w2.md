@@ -196,24 +196,72 @@ Listener: View Results Tree cấu hình **Errors only** (chỉ giữ sample lỗ
 
 Chạy thử nhỏ: `-Jbase_users=5 -Jspike_users=40 -Jspike_delay=15 -Jspike_secs=20 -Jtotal_secs=60` (60 giây). Kết quả: 20.986 sample, 0 lỗi, đủ 8 bước; số thread 5 → 45 → 5 (vọt lên ở giây ~15, về nền ở giây ~35), req/s ~100 → ~960 → ~105, p95 2–5 ms.
 
-## 8. Lockout khi chạy Stress/Spike
+## 8. Lockout khi chạy Stress/Spike/Soak
 
 - Luồng tải chỉ dùng mật khẩu đúng nên không tự khóa tài khoản. Vẫn kiểm tra vì tải cao.
-- Plan Stress/Spike có thêm assertion **"Không bị khóa (403 lockout)"** ở bước login, đặt trước `Assert HTTP 200`. Nếu body login có "bị khóa" thì `.jtl` ghi `failureMessage` = `LOCKOUT 403: tài khoản ... bị khóa - lỗi dữ liệu, không phải lỗi tải`. Đã thử khóa `quang_u001`, `quang_u002` bằng SQL rồi chạy: `.jtl` ghi đúng message LOCKOUT.
+- Plan Stress/Spike/Soak có thêm assertion **"Không bị khóa (403 lockout)"** ở bước login, đặt trước `Assert HTTP 200`. Nếu body login có "bị khóa" thì `.jtl` ghi `failureMessage` = `LOCKOUT 403: tài khoản ... bị khóa - lỗi dữ liệu, không phải lỗi tải`. Đã thử khóa `quang_u001`, `quang_u002` bằng SQL rồi chạy: `.jtl` ghi đúng message LOCKOUT.
 - Không lấy mã 403 làm dấu hiệu lockout: middleware token (`server.js:106`) cũng trả `403 Forbidden` khi token sai. Một lần login bị khóa sẽ kéo theo 403 Forbidden ở bước 2/6/8 của vòng đó (token `NOT_FOUND`), nên khi đếm lỗi thì nhóm theo message LOCKOUT ở bước 1, các 403 Forbidden cùng vòng là hệ quả, không phải lỗi tải.
 - Lỗi tải là: 5xx, `Non HTTP response code` (timeout, connection refused/reset), hoặc request chậm vượt response timeout 30 s.
 - Trước mỗi lượt: `bash scripts/reset-state.sh`. Sau mỗi lượt chạy lại script này: dòng `Trước reset - đang khóa: X` cho biết lượt vừa rồi có khóa user nào không (dòng "còn khóa" phía dưới in sau khi mở khóa nên luôn là 0).
 
-## 9. Lệnh chạy chính thức Stress/Spike
+## 9. Thông số Soak
+
+Mục tiêu: giữ tải ổn định **ngay dưới điểm gãy** 10 phút để đo max stable RPS, p95 ổn định và RAM node theo thời gian (nghi rò rỉ bộ nhớ vì giỏ hàng nằm trong RAM, không bao giờ xóa: ở Stress RSS tăng liên tục 50 → 212 MB). 1 Thread Group thường.
+
+| Thông số | Giá trị | Property | Lý do |
+|---|---|---|---|
+| Số VU | **300** | `threads=300` | 75% ngưỡng ~400 VU (mục 6). Ở Stress 300 VU: 6.257 req/s, p95 3 ms, 0% lỗi, throughput còn tăng tuyến tính → mức "ổn định" nhưng đã nặng (CPU node ~100%). |
+| Ramp-up | 60 s | `rampup=60` | 5 VU/s, không dồn 300 lệnh login cùng lúc. |
+| Thời gian | 600 s giữ tải | `duration=660` (= ramp 60 + giữ 600) | Mức dưới của gợi ý 10–15 phút. |
+| Think-time | 0–100 ms | `think_min=0`, `think_range=100` | Giống Stress để 300 VU ở Soak cùng nghĩa với 300 VU ở Stress. Gợi ý chung 1–2 s sẽ cần hàng nghìn VU mới tới gần ngưỡng (giống lỗi Stress bản đầu). |
+| Listener | **Không thêm** | | Chạy CLI, `.jtl` lấy từ `-l`, số liệu xem trong HTML report; listener GUI không có tác dụng khi `-n`. Yêu cầu "3 listener khác nhau" chỉ áp dụng cho Load/Stress/Spike, nên chọn cách đơn giản nhất. |
+| Assertion | Như Stress (có kiểm tra lockout ở login) | | Tải cao, giữ cách phân biệt lỗi dữ liệu và lỗi tải. |
+
+Ước lượng `.jtl`: ~6.257 req/s x ~630 s ≈ 3,9 triệu request x ~290 byte ≈ **~1,1 GB raw / ~60 MB nén**. Lớn nhất trong 4 plan, không đưa lên GitHub; nếu zip nộp bị giới hạn dung lượng thì phải tính lại (ví dụ nộp HTML report + bảng số liệu, `.jtl` để link riêng).
+
+**Theo dõi RAM node:** chạy `scripts/monitor-node.sh` song song với JMeter, mỗi 60 s ghi `time,cpu_percent,rss_mb` vào `evidence/soak/node-usage.csv` (~12 dòng cho 11 phút). Script tự tìm process `node server.js` (hoặc truyền PID), tự dừng khi JMeter kết thúc (ghi thêm 1 dòng sau khi test xong) hoặc Ctrl+C. Vẫn quay/chụp Activity Monitor cùng lúc cho video. RAM tăng đều suốt 10 phút mà không đi ngang → nghi rò rỉ (giỏ hàng `userCarts` trong RAM). Trước lượt Soak chính thức nên restart backend + `node scripts/setup-users.js` (mục 4) để RAM đầu là số sạch.
+
+Số cần báo cáo (Bước 4 file phân công): số VU ổn định, max stable RPS, p95, error %, RAM đầu → cuối và đỉnh, CPU trung bình/đỉnh (lấy từ `node-usage.csv`).
+
+Chạy thử nhỏ: `-Jthreads=50 -Jrampup=10 -Jduration=60`, monitor với `INTERVAL=10`. Kết quả: 57.672 sample, 0 lỗi, đủ 8 bước, 50 thread từ giây ~5 tới hết, ~1.020 req/s, p95 2–3 ms. Monitor ghi 8 dòng (CPU node 17–36%, RSS 99–110 MB vì backend chưa restart, giỏ cũ còn trong RAM) và tự dừng sau khi JMeter kết thúc.
+
+## 10. Lệnh chạy chính thức (4 plan)
+
+Chạy từ root repo, lần lượt từng plan, mỗi plan theo thứ tự: reset → bật monitor → jmeter → reset (đọc dòng "Trước reset - đang khóa").
+
+| # | Plan | Thời gian | `.jtl` | HTML report | Monitor |
+|---|---|---|---|---|---|
+| 1 | Load | 6,5 phút | `results/20120359_Load_20261124.jtl` | `reports/20120359_Load_20261124_html` | `evidence/load/node-usage.csv` |
+| 2 | Stress | 5 phút | `results/20120359_Stress_20261124.jtl` | `reports/20120359_Stress_20261124_html` | `evidence/stress/node-usage.csv` |
+| 3 | Spike | 3,5 phút | `results/20120359_Spike_20261124.jtl` | `reports/20120359_Spike_20261124_html` | `evidence/spike/node-usage.csv` |
+| 4 | Soak | 11 phút | `results/20120359_Soak_20261124.jtl` | `reports/20120359_Soak_20261124_html` | `evidence/soak/node-usage.csv` |
 
 ```bash
+# Lặp lại cho Type = Load, Stress, Spike, Soak (type viết thường cho thư mục evidence)
 bash scripts/reset-state.sh
-jmeter -n -t testplans/20120359_Stress_20261124.jmx -q user.properties \
-       -l results/20120359_Stress_20261124.jtl -e -o reports/20120359_Stress_20261124_html
-bash scripts/reset-state.sh   # xem dòng "Trước reset - đang khóa"
+bash scripts/monitor-node.sh evidence/load/node-usage.csv &
+jmeter -n -t testplans/20120359_Load_20261124.jmx -q user.properties \
+       -l results/20120359_Load_20261124.jtl -e -o reports/20120359_Load_20261124_html
+bash scripts/reset-state.sh   # monitor tự dừng trong vòng 60 s sau khi JMeter xong
 
 bash scripts/reset-state.sh
+bash scripts/monitor-node.sh evidence/stress/node-usage.csv &
+jmeter -n -t testplans/20120359_Stress_20261124.jmx -q user.properties \
+       -l results/20120359_Stress_20261124.jtl -e -o reports/20120359_Stress_20261124_html
+bash scripts/reset-state.sh
+
+bash scripts/reset-state.sh
+bash scripts/monitor-node.sh evidence/spike/node-usage.csv &
 jmeter -n -t testplans/20120359_Spike_20261124.jmx -q user.properties \
        -l results/20120359_Spike_20261124.jtl -e -o reports/20120359_Spike_20261124_html
 bash scripts/reset-state.sh
+
+# Soak: restart backend + node scripts/setup-users.js trước (RAM sạch), rồi:
+bash scripts/reset-state.sh
+bash scripts/monitor-node.sh evidence/soak/node-usage.csv &
+jmeter -n -t testplans/20120359_Soak_20261124.jmx -q user.properties \
+       -l results/20120359_Soak_20261124.jtl -e -o reports/20120359_Soak_20261124_html
+bash scripts/reset-state.sh
 ```
+
+`-e -o` cần thư mục report chưa tồn tại (hoặc rỗng); chạy lại thì xóa thư mục cũ trước.

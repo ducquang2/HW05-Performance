@@ -120,3 +120,18 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Chạy thử Stress `-Jstep_users=10 -Jstep_secs=10`: 113.284 sample, 0 lỗi, đủ 8 bước, VU 10 → 100 mỗi 10 s, req/s 165 → 2.061. Spike `-Jbase_users=5 -Jspike_users=40 -Jspike_delay=15 -Jspike_secs=20 -Jtotal_secs=60`: 20.986 sample, 0 lỗi, số thread 5 → 45 → 5.
   - Thêm 2 dòng vào `notes/review-testplans.md`: Stress bậc 60 s làm `.jtl` 903 MB; Spike cũ 160 VU think 0,5–1 s gần như không tạo áp lực.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 9 – Bước 4: sinh test plan Soak `20120359_Soak_20261124.jmx` và script theo dõi RAM node
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-24 00:18
+- Mục đích: Plan Soak 10 phút ở mức ngay dưới điểm gãy để đo max stable RPS, p95 ổn định và RAM node theo thời gian.
+- Prompt của tôi:
+  > Viết plan Soak 10 phút cho W2 ở mức tải ngay dưới điểm gãy (khoảng 75% ngưỡng 400 VU), think-time giống Stress, để đo max stable RPS, p95 ổn định và RAM của node theo thời gian (nghi rò rỉ bộ nhớ do giỏ hàng trong RAM). Ghi rõ cách theo dõi RAM mỗi 1–2 phút.
+- Output của AI (tóm tắt):
+  - `testplans/20120359_Soak_20261124.jmx`: cùng 8 bước và assertion (có kiểm tra lockout) như Stress; 1 Thread Group `${__P(threads,300)}` VU, ramp `${__P(rampup,60)}` s, duration `${__P(duration,660)}` s (= ramp 60 + giữ 600), think 0–100 ms từ property. Không thêm listener (chạy CLI, `.jtl` từ `-l`, yêu cầu 3 listener khác nhau chỉ cho Load/Stress/Spike).
+  - Lý do 300 VU (mục 9 `notes/workflow-w2.md`): 75% ngưỡng ~400 VU; ở Stress 300 VU đạt 6.257 req/s, p95 3 ms, 0% lỗi, throughput còn tăng tuyến tính. Ước `.jtl` ~1,1 GB raw / ~60 MB nén.
+  - `scripts/monitor-node.sh <file.csv> [PID]`: tự tìm `node server.js` nếu không có PID, mỗi 60 s ghi `time,cpu_percent,rss_mb`, tự dừng khi JMeter kết thúc hoặc Ctrl+C. Dùng cho cả 4 lượt chính thức, output `evidence/<type>/node-usage.csv`.
+  - Mục 10 `notes/workflow-w2.md`: bảng và lệnh chạy chính thức 4 plan theo thứ tự reset → monitor → jmeter → reset; trước Soak restart backend + `setup-users.js` để RAM đầu sạch.
+  - Chạy thử `-Jthreads=50 -Jrampup=10 -Jduration=60` kèm `INTERVAL=10 bash scripts/monitor-node.sh`: 57.672 sample, 0 lỗi, đủ 8 bước, 50 thread, ~1.020 req/s, p95 2–3 ms; monitor ghi 8 dòng (CPU node 17–36%, RSS 99–110 MB) và tự dừng sau khi JMeter xong.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
