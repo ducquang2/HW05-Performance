@@ -88,3 +88,19 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Chạy thử `-Jbase_users=2 -Jspike_users=10 -Jspike_delay=20 -Jspike_secs=30 -Jtotal_secs=80`: 643 request, 0 lỗi, đủ 8 bước, số thread 2 → 12 → 2 đúng hình dạng. Thử nhanh 40 s ở mức 150 VU thật: 4238 request, 0 lỗi, max 76 ms.
   - Lệnh chạy chính thức cả 2 plan ghi ở mục 9 của `notes/workflow-w2.md`.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 7 – Bước 2: sửa test plan Stress sau khi chạy thử full-size
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-23 23:35
+- Mục đích: Plan Stress bản đầu chạy đủ 10 phút tới 200 VU không gãy; sửa thông số để tìm được điểm gãy thật trên máy đang test.
+- Prompt của tôi:
+  > Chạy thử Stress đủ 10 phút tới 200 VU vẫn không gãy (301 req/s, p95 3 ms, CPU node 20%); thử think 0–100 ms thì 200 VU đạt ~4000 req/s, p95 3 ms, CPU node 70%, vẫn 0 lỗi. Sửa plan Stress để thực sự tìm được điểm gãy trên máy này: chọn lại think-time, bậc tăng và mức trần, cho think-time đọc từ property, tăng số tài khoản test cho đủ số VU tối đa. Giải thích vì sao thay đổi và cách nhận biết điểm gãy.
+- Output của AI (tóm tắt):
+  - `testplans/20120359_Stress_20261123.jmx`: think-time đổi từ 0,5–1 s sang 0–100 ms, đọc từ `${__P(think_min,0)}` + `${__P(think_range,100)}`; mỗi bậc `${__P(step_users,50)}` VU, vẫn 10 Thread Group thường, 60 s/bậc, tổng 10 phút, trần 500 VU. Load và Spike không đổi.
+  - Lý do (mục 6 `notes/workflow-w2.md`): số liệu chạy dò cho thấy RPS tăng tuyến tính ~20 req/s mỗi VU, CPU node ~0,35% mỗi VU → dự đoán node chạm 100% CPU ở ~280–300 VU, nên trần 500 VU để bậc gãy nằm giữa lượt chạy. Stress là để đẩy tới giới hạn chứ không mô phỏng người dùng thật nên think gần 0; Load vẫn giữ 1–3 s. Ghi hạn chế: JMeter chạy cùng máy cũng ăn CPU.
+  - Cách nhận biết điểm gãy: bậc đầu tiên có lỗi > 1%, p95 tăng vọt so với bậc trước, hoặc VU tăng mà req/s đi ngang.
+  - `scripts/setup-users.js` nhận số user từ argv/`USER_COUNT` (mặc định 500), vẫn login thử trước để không tạo trùng; đã chạy: tạo mới 300, đã có 200, login OK 500/500; `data/users.csv` có 500 dòng.
+  - Chạy thử `-Jstep_users=10 -Jstep_secs=10` (100 s, 10 → 100 VU): 108.509 sample, 0 lỗi, đủ 8 bước, req/s tăng đều 158 → 2.007 theo bậc, p95 2–3 ms.
+  - Ghi thêm 1 dòng vào `notes/review-testplans.md`: AI chọn think 0,5–1 s và trần 200 VU theo gợi ý chung, không biết SUT chỉ mất ~1 ms/request.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_

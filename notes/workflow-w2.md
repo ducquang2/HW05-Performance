@@ -52,11 +52,11 @@ W2 khác W1 và W3 ở cả 3 điểm (read, transactional, bước phụ), đ�
 
 ## 3. Dữ liệu CSV
 
-Sinh bằng `node scripts/setup-users.js` (đọc categories/products từ API thật):
+Sinh bằng `node scripts/setup-users.js [số user]` (mặc định 500; đọc categories/products từ API thật):
 
 | File | Header | Số dòng dữ liệu | Nội dung |
 |---|---|---|---|
-| `data/users.csv` | `email,password` | 200 | `quang_u001@eshop.com` .. `quang_u200@eshop.com`, mật khẩu `Quang1234!` |
+| `data/users.csv` | `email,password` | 500 | `quang_u001@eshop.com` .. `quang_u500@eshop.com`, mật khẩu `Quang1234!` |
 | `data/categories.csv` | `category_id,category_name` | 3 | 1 Điện thoại, 2 Laptop, 3 Phụ kiện (chỉ lấy category có sản phẩm) |
 | `data/coupons.csv` | `coupon_code,total_amount` | 2 | `VIP100,600000` và `BIGBUY,600000` |
 
@@ -66,11 +66,11 @@ Cấu hình CSV Data Set Config trong JMeter:
 
 | File | Sharing mode | Recycle on EOF | Stop thread on EOF | Lý do |
 |---|---|---|---|---|
-| `users.csv` | All threads | True | False | 200 dòng ≥ số VU lớn nhất dự kiến (~150–200), mỗi VU đọc 1 dòng khác nhau → mỗi VU 1 tài khoản, giỏ hàng không lẫn nhau. Recycle chỉ để không dừng khi VU lặp nhiều vòng. |
+| `users.csv` | All threads | True | False | 500 dòng ≥ số VU lớn nhất (Stress 500), mỗi VU đọc 1 dòng khác nhau → mỗi VU 1 tài khoản, giỏ hàng không lẫn nhau. Recycle chỉ để không dừng khi VU lặp nhiều vòng. |
 | `categories.csv` | All threads | True | False | Chỉ 3 dòng, quay vòng để các VU rải đều qua 3 category |
 | `coupons.csv` | All threads | True | False | 2 dòng, quay vòng VIP100/BIGBUY |
 
-Lưu ý về `users.csv`: CSV Data Set Config lấy dòng kế tiếp ở **mỗi vòng lặp**, nên vòng sau một VU có thể nhận tài khoản khác. Việc này không sao vì mỗi vòng đều login lại lấy token mới. Vì 200 dòng ≥ số VU đồng thời và các dòng được chia lần lượt, tại một thời điểm các VU gần như luôn dùng tài khoản khác nhau. Giỏ hàng có lẫn một chút cũng không làm checkout sai (checkout không đọc giỏ). Đã chốt trong test plan Load: `users.csv` để **All threads + Recycle True**. Không dùng `Current thread` vì khi đó mọi VU đọc cùng dòng đầu tiên (chung 1 tài khoản); không dùng Stop thread on EOF vì sau 200 vòng (khoảng 1,5 phút với 30 VU) test sẽ dừng sớm. Recycle an toàn vì mỗi vòng đều login lại bằng mật khẩu đúng, không ảnh hưởng lockout.
+Lưu ý về `users.csv`: CSV Data Set Config lấy dòng kế tiếp ở **mỗi vòng lặp**, nên vòng sau một VU có thể nhận tài khoản khác. Việc này không sao vì mỗi vòng đều login lại lấy token mới. Vì 500 dòng ≥ số VU đồng thời và các dòng được chia lần lượt, tại một thời điểm các VU gần như luôn dùng tài khoản khác nhau. Giỏ hàng có lẫn một chút cũng không làm checkout sai (checkout không đọc giỏ). Đã chốt trong test plan Load: `users.csv` để **All threads + Recycle True**. Không dùng `Current thread` vì khi đó mọi VU đọc cùng dòng đầu tiên (chung 1 tài khoản); không dùng Stop thread on EOF vì sau 200 vòng (khoảng 1,5 phút với 30 VU) test sẽ dừng sớm. Recycle an toàn vì mỗi vòng đều login lại bằng mật khẩu đúng, không ảnh hưởng lockout.
 
 ## 4. Reset giữa các lượt chạy
 
@@ -84,7 +84,7 @@ Máy: M2 Pro 10 nhân, 16 GB, backend Node + SQLite và JMeter chạy **cùng m�
 
 | Thông số | Giá trị | Property JMeter | Lý do |
 |---|---|---|---|
-| Số VU | **30** | `threads=30` | Nằm giữa khoảng 20–50 gợi ý. Load là tải "bình thường", không phải tìm điểm gãy. Node chạy 1 luồng event loop, SQLite chỉ 1 connection nên mọi lệnh ghi (login `UPDATE`, checkout `INSERT`) xếp hàng tuần tự; 30 VU vẫn để dư chỗ cho Stress tăng tiếp. JMeter 30 thread rất nhẹ so với 16 GB, ít tranh CPU với backend. `users.csv` có 200 tài khoản, dư cho 30 VU. |
+| Số VU | **30** | `threads=30` | Nằm giữa khoảng 20–50 gợi ý. Load là tải "bình thường", không phải tìm điểm gãy. Node chạy 1 luồng event loop, SQLite chỉ 1 connection nên mọi lệnh ghi (login `UPDATE`, checkout `INSERT`) xếp hàng tuần tự; 30 VU vẫn để dư chỗ cho Stress tăng tiếp. JMeter 30 thread rất nhẹ so với 16 GB, ít tranh CPU với backend. `users.csv` có 500 tài khoản, dư cho 30 VU. |
 | Ramp-up | **90 giây** | `rampup=90` | Cứ 3 giây thêm 1 VU. Mỗi VU vào là login ngay (ghi DB), ramp chậm để không dồn 30 lệnh ghi cùng lúc ở giây đầu, giống người dùng vào dần. |
 | Giữ tải | **5 phút** (300 giây) | `duration=390` | Thread Group chỉ có 1 ô Duration tính từ lúc bắt đầu, nên `duration = ramp 90 + giữ 300 = 390` giây. 5 phút đủ để có vài nghìn sample cho số liệu ổn định; chạy dài 10–15 phút để dành cho soak (Bước 4). |
 | Think-time | **1–3 giây ngẫu nhiên** | Uniform Random Timer: constant 1000 ms + random 2000 ms | Người dùng thật đọc trang rồi mới bấm tiếp. Đặt trước mỗi bước 2–8 (7 lần, trung bình 2 giây) nên 1 vòng ≈ 14 giây. |
@@ -110,33 +110,43 @@ Mục tiêu: tăng tải từng bậc tới khi hệ thống gãy (lỗi tăng h
 
 | Thread Group | VU | Startup delay | Duration | Ramp | Số VU đang chạy |
 |---|---|---|---|---|---|
-| Stress bậc 01 | 20 | 0 s | 600 s | 5 s | 20 |
-| Stress bậc 02 | 20 | 60 s | 540 s | 5 s | 40 |
-| Stress bậc 03 | 20 | 120 s | 480 s | 5 s | 60 |
+| Stress bậc 01 | 50 | 0 s | 600 s | 5 s | 50 |
+| Stress bậc 02 | 50 | 60 s | 540 s | 5 s | 100 |
+| Stress bậc 03 | 50 | 120 s | 480 s | 5 s | 150 |
 | ... | ... | ... | ... | ... | ... |
-| Stress bậc 10 | 20 | 540 s | 60 s | 5 s | 200 |
+| Stress bậc 10 | 50 | 540 s | 60 s | 5 s | 500 |
 
 Công thức trong plan: bậc `i` (0..9) có delay = `i * step_secs`, duration = `(10 - i) * step_secs`, viết bằng `${__jexl3(...)}` quanh `${__P(step_secs,60)}`.
 
-| Thông số | Giá trị | Property | Lý do |
-|---|---|---|---|
-| Bước tăng | +20 VU | `step_users=20` | Theo gợi ý 2.2. Load 30 VU chạy rất nhẹ (smoke 5 VU p95 ≤ 8 ms) nên bậc 20 đủ lớn để thấy thay đổi mà vẫn đủ nhiều bậc để chỉ ra điểm gãy ở khoảng nào. |
-| Thời gian mỗi bậc | 60 s | `step_secs=60` | Mỗi VU 1 vòng khoảng 5 s, 60 s là ~10 vòng/VU, đủ sample để tính p95 của từng bậc. |
-| Ramp mỗi bậc | 5 s | `step_ramp=5` | 20 VU vào trong 5 s (4 VU/s), không dồn 20 lệnh login (có ghi DB) vào cùng 1 ms, nhưng vẫn là bậc rõ ràng. |
-| Mức trần | **200 VU** (10 bậc) | | `users.csv` chỉ có 200 tài khoản. Trên 200 thì nhiều VU login cùng tài khoản cùng lúc, kết quả lẫn lỗi dữ liệu. 200 thread JMeter vẫn nhẹ với máy 16 GB. |
-| Think-time | 0,5–1 s | Uniform Random Timer 500 + 500 ms | Ngắn hơn Load (1–3 s) để mỗi VU tạo nhiều request hơn. Vẫn khác 0 cho giống người dùng thật. |
-| Tổng thời gian | **600 s = 10 phút** | | 10 bậc x 60 s. Bậc 200 VU chỉ giữ 60 s. |
+### Vì sao đổi thông số (sau khi chạy thử full-size)
 
-Ước lượng: 1 vòng ≈ 7 x 0,75 s = 5,25 s, 8 request/vòng → 20 VU ≈ 30 req/s, 200 VU ≈ 300 req/s.
+Bản đầu (+20 VU/60 s, trần 200 VU, think 0,5–1 s) chạy đủ 10 phút **không gãy**: bậc 200 VU chỉ 301,5 req/s, p50 1 ms, p95 3 ms, p99 4 ms, max 56 ms, 0% lỗi, CPU node ~20%, RSS 44 → 79 MB. SUT chỉ mất ~1 ms/request nên gần như toàn bộ thời gian của VU là think-time, 200 VU vẫn là tải nhẹ.
+
+Chạy dò thêm với think 0–100 ms, +20 VU/20 s tới 200 VU: vẫn không gãy, 200 VU đạt 3.994 req/s, p95 3 ms, p99 6 ms, max 156 ms, 0% lỗi, CPU node ~70%, RSS 60 → 113 MB. RPS tăng tuyến tính theo VU (~20 req/s mỗi VU), CPU node ~0,35% mỗi VU → ước lượng node (1 luồng) chạm 100% CPU ở khoảng **280–300 VU**. Đặt trần 500 VU để bậc gãy nằm khoảng giữa lượt chạy (bậc 6, 300 VU) và còn vài bậc phía sau để thấy rõ throughput đứng lại.
+
+| Thông số | Cũ | Mới | Property | Lý do |
+|---|---|---|---|---|
+| Bước tăng | +20 VU | **+50 VU** | `step_users=50` | +20 VU chỉ thêm ~7% CPU node mỗi bậc, 10 bậc không tới giới hạn. +50 VU ≈ +1.000 req/s, +17% CPU mỗi bậc. |
+| Thời gian mỗi bậc | 60 s | 60 s | `step_secs=60` | Giữ nguyên: mỗi VU 1 vòng ~0,4 s nên 60 s đủ nhiều sample để tính p95 từng bậc. |
+| Ramp mỗi bậc | 5 s | 5 s | `step_ramp=5` | Giữ nguyên, 10 VU/s, bậc vẫn rõ ràng. |
+| Mức trần | 200 VU | **500 VU** (10 bậc) | | Gấp ~1,7 lần mức dự đoán gãy (~300 VU). `users.csv` tăng lên 500 tài khoản (`node scripts/setup-users.js 500`) để mỗi VU vẫn 1 tài khoản riêng. |
+| Think-time | 0,5–1 s | **0–100 ms** | `think_min=0`, `think_range=100` (Uniform Random Timer `${__P(think_min,0)}` + `${__P(think_range,100)}`) | Stress cần đẩy SUT tới giới hạn, không mô phỏng người dùng thật. Think dài thì phải cần hàng nghìn VU mới đủ tải. Load vẫn giữ 1–3 s (tải bình thường), Spike giữ 0,5–1 s. |
+| Tổng thời gian | 600 s | 600 s = 10 phút | | 10 bậc x 60 s. |
+
+Ước lượng: 1 vòng ≈ 7 x 50 ms think + 8 x ~1 ms ≈ 0,36–0,4 s, 8 request/vòng → ~20 req/s mỗi VU. Nếu không gãy thì 300 VU ≈ 6.000 req/s, 500 VU ≈ 10.000 req/s; thực tế node sẽ bão hòa trước đó.
+
+**Hạn chế:** JMeter chạy cùng máy với backend nên cũng ăn CPU (500 thread, ghi `.jtl` hàng nghìn dòng/giây). Điểm gãy đo được là của "máy này khi chạy cả JMeter lẫn backend", có thể đến sớm hơn so với khi JMeter ở máy riêng. Khi chạy nên mở Activity Monitor (hoặc `top -pid <PID node>`) ghi lại CPU của node và của java để biết bên nào chạm giới hạn trước. RSS node cũng tăng dần vì giỏ hàng nằm trong RAM và không bao giờ được xóa (mục 4), nên tải càng cao bộ nhớ càng phình.
 
 **Cách nhận biết điểm gãy:** trong HTML report xem cùng lúc *Active Threads Over Time*, *Response Time Percentiles Over Time* và *Transactions Per Second*. Điểm gãy là bậc đầu tiên có một trong các dấu hiệu:
-- tỉ lệ lỗi > 1% (lỗi tải: 5xx, `Non HTTP response code` timeout/connection refused);
-- p95 của bậc tăng vọt so với bậc trước (ví dụ gấp nhiều lần, hoặc vượt 1 s);
-- VU tăng mà throughput không tăng nữa (hệ thống đã bão hòa, request chỉ xếp hàng).
+- tỉ lệ lỗi > 1% (lỗi tải: 5xx, `Non HTTP response code` timeout/connection refused/reset);
+- p95 của bậc tăng vọt so với bậc trước (ví dụ từ vài ms lên hàng chục/hàng trăm ms, hoặc vượt 1 s);
+- VU tăng mà throughput không tăng nữa (đường req/s đi ngang, mất quan hệ ~20 req/s mỗi VU): node đã 100% CPU, request chỉ xếp hàng nên response time tăng theo.
 
-Nếu tới 200 VU vẫn không có dấu hiệu nào thì kết luận là "không gãy trong phạm vi 200 VU" (giới hạn bởi số tài khoản), không cố tăng tiếp. Aggregate Report là số tổng cả lượt; muốn số của từng bậc thì lọc `.jtl` theo khoảng thời gian 60 s của bậc đó.
+Với SUT này dấu hiệu thứ 3 dự kiến xuất hiện trước (throughput đi ngang + p95 tăng), lỗi chỉ xuất hiện khi hàng đợi dài tới mức timeout. Aggregate Report là số tổng cả lượt; số của từng bậc thì lọc `.jtl` theo khoảng 60 s của bậc đó (tính VU, req/s, p50/p95/p99, % lỗi cho từng khoảng).
 
-Chạy thử nhỏ: `-Jstep_users=2 -Jstep_secs=10 -Jstep_ramp=2` (100 giây, 2 → 20 VU).
+Nếu tới 500 VU vẫn không có dấu hiệu nào thì ghi là "không gãy trong phạm vi 500 VU" kèm CPU node lúc đó.
+
+Chạy thử nhỏ: `-Jstep_users=10 -Jstep_secs=10` (100 giây, 10 → 100 VU). Kết quả chạy thử: 108.509 sample, 0 lỗi, đủ 8 bước; mỗi 10 s số VU tăng 10 và req/s tăng đều 158 → 2.007 (≈ 20 req/s mỗi VU), p95 2–3 ms; khoảng nghỉ giữa 2 request cùng thread trung vị 48 ms, lớn nhất 117 ms (đúng think 0–100 ms đọc từ property).
 
 ## 7. Thông số Spike
 
@@ -152,12 +162,12 @@ Hình dạng tải: 0–60 s: 10 VU → 60–65 s: vọt lên 160 VU → 65–15
 | Thông số | Giá trị | Property | Lý do |
 |---|---|---|---|
 | Nền | 10 VU | `base_users=10`, `base_ramp=10` | Tải thấp, có sẵn số p95 "bình thường" trong 60 s đầu để so sánh với lúc spike và lúc hồi phục. |
-| Đỉnh | +150 VU (tổng 160) | `spike_users=150` | Mức trên của gợi ý 100–150, gấp 16 lần nền nên đủ "sốc". Tổng 160 < 200 tài khoản trong `users.csv`. |
+| Đỉnh | +150 VU (tổng 160) | `spike_users=150` | Mức trên của gợi ý 100–150, gấp 16 lần nền nên đủ "sốc". Tổng 160 < 500 tài khoản trong `users.csv`. |
 | Ramp spike | 5 s | `spike_ramp=5` | 30 VU/s, đủ đột ngột (khác Stress tăng 20 VU mỗi phút). |
 | Thời điểm spike | giây 60 | `spike_delay=60` | Đủ 60 s nền ổn định trước khi spike. |
 | Giữ spike | 90 s | `spike_secs=95` (= ramp 5 + giữ 90) | Trong khoảng 1–2 phút gợi ý: đủ thấy hệ thống chịu được hay bắt đầu lỗi, nhưng ngắn để vẫn là spike chứ không thành stress. Hết duration thì 150 VU dừng cùng lúc → tải rơi đột ngột về nền. |
 | Hồi phục | 115 s | `total_secs=270` | ≥ 60 s chỉ có nền để xem p95/lỗi có trở về mức của 60 s đầu không. |
-| Think-time | 0,5–1 s | Uniform Random Timer 500 + 500 ms | Giống Stress. |
+| Think-time | 0,5–1 s | Uniform Random Timer 500 + 500 ms | Giữ như bản đầu (Stress đã đổi sang 0–100 ms, xem mục 6). |
 | Tổng thời gian | **270 s = 4,5 phút** | | |
 
 Listener: View Results Tree cấu hình **Errors only** (chỉ giữ sample lỗi, không ghi file) để không làm chậm JMeter khi 160 VU. Khi chạy CLI (`-n`) listener GUI không có tác dụng, `.jtl` chính thức lấy từ `-l`; ảnh View Results Tree lấy bằng cách mở `.jtl` trong GUI hoặc chạy GUI tải nhỏ.

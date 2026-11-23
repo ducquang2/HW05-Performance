@@ -1,5 +1,5 @@
-// Tạo user test quang_u001..quang_u200 cho JMeter (workflow W2) và sinh các file CSV trong data/.
-// Chạy: node scripts/setup-users.js  (backend phải đang chạy ở BASE_URL)
+// Tạo user test quang_u001..quang_uNNN cho JMeter (workflow W2) và sinh các file CSV trong data/.
+// Chạy: node scripts/setup-users.js [số user]  (mặc định 500; backend phải đang chạy ở BASE_URL)
 // Lưu ý: restart backend sẽ reseed DB, mất user đã tạo -> chạy lại script này.
 const fs = require("fs");
 const path = require("path");
@@ -7,7 +7,11 @@ const path = require("path");
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const DATA_DIR = path.join(__dirname, "..", "data");
 const PASSWORD = "Quang1234!";
-const USER_COUNT = 200; // >= số VU lớn nhất dự kiến (Stress/Spike ~150-200)
+const USER_COUNT = Number(process.argv[2] || process.env.USER_COUNT || 500); // >= số VU lớn nhất (Stress 500)
+if (!Number.isInteger(USER_COUNT) || USER_COUNT < 1 || USER_COUNT > 999) {
+  console.error("Số user phải là số nguyên 1..999 (tên quang_uNNN có 3 chữ số)");
+  process.exit(1);
+}
 
 const users = Array.from({ length: USER_COUNT }, (_, i) => `quang_u${String(i + 1).padStart(3, "0")}@eshop.com`);
 
@@ -40,7 +44,7 @@ async function main() {
     created++;
   }
 
-  // Xác nhận lại: cả 200 user phải login được.
+  // Xác nhận lại: cả USER_COUNT user phải login được.
   const failed = [];
   for (const email of users) {
     const r = await login(email);
