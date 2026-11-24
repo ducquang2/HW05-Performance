@@ -1,3 +1,5 @@
+e0a97eb | ducquang2 | 2026-11-24 23:36:27 +0700 | docs(audit): ghi phần review / sửa cho các lần dùng AI
+0a5110f | ducquang2 | 2026-11-24 23:28:32 +0700 | docs(setup): thêm git commit log
 d842e3a | ducquang2 | 2026-11-24 23:28:32 +0700 | docs(report): thêm bảng tự chấm và bản PDF của report, critique, audit
 7520a70 | ducquang2 | 2026-11-24 23:27:31 +0700 | docs(report): thêm AI Critique và README
 96a9daf | ducquang2 | 2026-11-24 23:25:53 +0700 | docs(report): ghi rõ nguồn số CPU của JMeter
