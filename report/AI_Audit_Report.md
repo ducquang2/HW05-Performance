@@ -180,3 +180,15 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `skill/eshop-jmeter-perf/scripts/analyze-jtl.py`: bản của `scripts/analyze-jtl.py`, thêm `--skip N` (bỏ N giây ramp) và rps/error% theo endpoint. `scripts/jtl-windows.py`: chia `.jtl` theo cửa sổ thời gian (threads, req/s, p50/p95/p99/max, err%), có `--skip`.
   - Chạy thử cả 2 script trên `results/20120359_Load_20261124.jtl`: không skip ra 5.916 request, 15,2 req/s, p95 5 ms, p99 6 ms (khớp script cũ); `--skip 90` ra 17,1 req/s, max 23 ms.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 13 – Viết report chính `report/HW05_Report.md`
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-24 23:21
+- Mục đích: Tổng hợp report chính HW05 từ các file đã có trong repo (notes, kết quả chạy, Task 2, Task 3, bug report), không thêm số liệu mới ngoài file.
+- Prompt của tôi:
+  > Viết report chính HW05 từ các file notes, kết quả, task2, task3, bugs đã có.
+- Output của AI (tóm tắt):
+  - `report/HW05_Report.md` gồm 10 mục: thông tin chung (SUT, JMeter 5.6.3, phần cứng, link repo, video demo), bảng workflow nhóm 09 và cách W2 phủ auth/read/transactional, thiết kế test plan (8 bước, assertion, extractor, CSV, think-time, tham số 4 plan kèm lý do), tóm tắt review plan do AI sinh, quy trình reset lockout, kết quả 4 lượt kèm ảnh evidence và ngưỡng endurance (300 VU, ~6.390 req/s, p95 3 ms, 0 lỗi, RAM node 274,3 MB tăng ~4,4 MB/phút), tóm tắt Task 2, Task 3, bug #174–#177, hạn chế.
+  - Số tổng lấy từ `report/task2-review.md`; số theo bậc Stress, theo giai đoạn Spike và theo phút Soak tính lại từ `.jtl` bằng `skill/eshop-jmeter-perf/scripts/jtl-windows.py`; giờ chạy lấy từ timestamp dòng đầu/cuối `.jtl`; CPU/RAM node từ `evidence/<type>/node-usage.csv`.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
