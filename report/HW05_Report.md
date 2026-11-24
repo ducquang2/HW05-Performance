@@ -295,4 +295,4 @@ Tổng: 2 performance issue, 2 bug chức năng/bảo mật mới. Không có cr
 - **Video demo Agent Skill chưa có.** Skill đã có ở `skill/eshop-jmeter-perf/`, mới có video demo chính.
 - CPU/RAM node lấy mẫu mỗi ~60 s bằng `ps`, nên không thấy được dao động ngắn hơn 1 phút.
 - Chỉ có 1 lần chạy chính thức cho mỗi loại test, chưa chạy lặp để đo độ dao động giữa các lần.
-- `.jtl` và HTML report không đưa lên GitHub vì quá giới hạn 100 MB/file (Soak ~1,1 GB), nộp trong file zip.
+- `.jtl` và HTML report không đưa vào git vì quá giới hạn 100 MB/file (Soak ~1,1 GB). Zip nộp giới hạn 20 MB nên chỉ có 4 HTML report và `.jtl` của Load; `.jtl` của Stress, Spike, Soak để ở GitHub Release: https://github.com/ducquang2/HW05-Performance/releases/tag/results-20261124

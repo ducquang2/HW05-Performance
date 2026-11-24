@@ -76,4 +76,4 @@ reports/     HTML report (không có trên GitHub)
 git_commit_log.txt
 ```
 
-File `.jtl` (`results/`) và HTML report (`reports/`) không đưa lên GitHub vì quá lớn (giới hạn GitHub 100 MB/file), có trong file zip nộp.
+File `.jtl` (`results/`) và HTML report (`reports/`) không đưa vào git vì quá lớn (giới hạn GitHub 100 MB/file). Zip nộp có 4 HTML report và `.jtl` của Load; `.jtl` của Stress, Spike, Soak (nén 25 / 11 / 56 MB) để ở GitHub Release: https://github.com/ducquang2/HW05-Performance/releases/tag/results-20261124
