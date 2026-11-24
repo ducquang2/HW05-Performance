@@ -152,3 +152,18 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Bảng SLA cho tải thường (≤ 300 VU) và tải đỉnh (≤ 450 VU); hệ thống đạt hết trừ tiêu chí RAM.
   - 8 đề xuất tối ưu O1–O8: xóa/chuyển giỏ hàng khỏi RAM, SQLite WAL, index, bỏ UPDATE thừa khi login, cache categories/products, connection riêng đọc/ghi, cluster/PM2, bỏ `SELECT *`.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 11 – Task 3: đề xuất Continuous Performance Testing
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-24 21:50
+- Mục đích: Đề xuất mô hình Continuous Performance Testing cho EShop, có flow chart và trade-off, dựa trên số liệu thật của bài.
+- Prompt của tôi:
+  > Đề xuất mô hình Continuous Performance Testing cho EShop: theo dõi commit, quyết định commit nào cần chạy perf test, chạy gì, so p95 với baseline để gắn cờ regression. Dựa trên số liệu thật của bài (p95 chỉ vài ms, JMeter chạy chung máy, Soak RAM tăng 4,4 MB/phút, .jtl rất lớn) để chọn ngưỡng sao cho ít báo động giả. Vẽ flow chart và bàn trade-off chi phí, báo động giả, báo động sót.
+- Output của AI (tóm tắt), nguyên văn ở `report/task3-cpt-proposal.md`:
+  - Flow chart Mermaid + bản ASCII: lọc theo đường dẫn file (chỉ docs/frontend/mobile thì bỏ qua; `backend/server.js`, `database.js`, `package.json` thì chạy) → setup cố định (restart, `setup-users.js`, `reset-state.sh`) → smoke 5 VU → PR chạy Load 30 VU ×3, nightly chạy Stress + Soak kèm monitor RSS → `analyze-jtl.py` → so baseline → pass / chạy lại xác nhận / gắn cờ regression → cập nhật baseline khi merge `main` và có người duyệt.
+  - Bảng 4 tầng chạy (lọc, smoke, Load rút gọn ~12 phút, nightly ~25 phút).
+  - Quy tắc regression: ngưỡng kép p95 tăng > 20% và > 2 ms (vì p95 3 → 4 ms đã là +33%), median 3 lần, bỏ ramp, theo từng endpoint và tổng, Stress cần 2 bậc liên tiếp (tránh đợt GC 10 s ở 350 VU), error > 0,1% fail, p99 chỉ cảnh báo, RSS slope Soak > ~1 MB/phút, percentile lấy từ `.jtl`.
+  - Ví dụ: commit sửa #174 kỳ vọng RSS slope về ~0 ở nightly; query chậm ~20 ms ở `/api/products` bị bắt ở tầng PR theo endpoint, chậm ~1 ms thì lọt tới nightly.
+  - Bảng trade-off chi phí, báo động giả, báo động sót, baseline trôi, môi trường; 3 hạn chế (chưa cài đặt, ngưỡng suy ra từ 1 bộ đo, chỉ phủ W2).
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
