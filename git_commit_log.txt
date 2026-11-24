@@ -1,3 +1,5 @@
+7a3d753 | ducquang2 | 2026-11-24 23:40:56 +0700 | docs(report): thêm link GitHub Release chứa file .jtl lớn
+d59d081 | ducquang2 | 2026-11-24 23:36:27 +0700 | docs(setup): cập nhật git commit log
 e0a97eb | ducquang2 | 2026-11-24 23:36:27 +0700 | docs(audit): ghi phần review / sửa cho các lần dùng AI
 0a5110f | ducquang2 | 2026-11-24 23:28:32 +0700 | docs(setup): thêm git commit log
 d842e3a | ducquang2 | 2026-11-24 23:28:32 +0700 | docs(report): thêm bảng tự chấm và bản PDF của report, critique, audit
