@@ -289,7 +289,7 @@ Tổng: 2 performance issue, 2 bug chức năng/bảo mật mới. Không có cr
 
 ## 10. Hạn chế
 
-- **JMeter chạy chung máy với backend.** JMeter (java) chiếm khoảng 30–40% CPU ở tải cao, nên điểm bão hòa đo được là của "máy này khi chạy cả hai", có thể đến sớm hơn khi tách máy.
+- **JMeter chạy chung máy với backend.** Lúc chạy thử, JMeter (java) chiếm khoảng 30–40% CPU ở tải cao (lượt chính thức không đo riêng), nên điểm bão hòa đo được là của "máy này khi chạy cả hai", có thể đến sớm hơn khi tách máy.
 - **Không cài plugin Custom Thread Groups.** Stress dựng bằng 10 Thread Group thường, Spike bằng 2 Thread Group, nên hình dạng tải đúng nhưng cấu hình dài hơn so với Stepping/Ultimate Thread Group.
 - **Ảnh lượt Load không có Activity Monitor trong cùng khung hình.** CPU/RAM node của lượt Load chỉ có trong `evidence/load/node-usage.csv`.
 - **Video demo Agent Skill chưa có.** Skill đã có ở `skill/eshop-jmeter-perf/`, mới có video demo chính.
