@@ -192,3 +192,15 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `report/HW05_Report.md` gồm 10 mục: thông tin chung (SUT, JMeter 5.6.3, phần cứng, link repo, video demo), bảng workflow nhóm 09 và cách W2 phủ auth/read/transactional, thiết kế test plan (8 bước, assertion, extractor, CSV, think-time, tham số 4 plan kèm lý do), tóm tắt review plan do AI sinh, quy trình reset lockout, kết quả 4 lượt kèm ảnh evidence và ngưỡng endurance (300 VU, ~6.390 req/s, p95 3 ms, 0 lỗi, RAM node 274,3 MB tăng ~4,4 MB/phút), tóm tắt Task 2, Task 3, bug #174–#177, hạn chế.
   - Số tổng lấy từ `report/task2-review.md`; số theo bậc Stress, theo giai đoạn Spike và theo phút Soak tính lại từ `.jtl` bằng `skill/eshop-jmeter-perf/scripts/jtl-windows.py`; giờ chạy lấy từ timestamp dòng đầu/cuối `.jtl`; CPU/RAM node từ `evidence/<type>/node-usage.csv`.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 14 – Viết AI Critique và README
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-24 23:27
+- Mục đích: Viết AI Critique (200–300 từ) và README theo mục 8.3, 8.7 của đề.
+- Prompt của tôi:
+  > Viết AI Critique 200–300 từ và README theo mục 8.3, 8.7 của đề
+- Output của AI (tóm tắt):
+  - `report/AI_Critique.md` (288 từ theo `wc -w`): trả lời 3 câu. AI sai ở timer trong Transaction Controller (sample 0 ms), thông số Stress 200 VU think 0,5–1 s không gãy, chốt điểm gãy 350 VU do một đợt chậm 10 s, O6 `better-sqlite3` "đọc song song" là hallucinated, O7 `cluster` bỏ sót `initDatabase()` `DROP TABLE`; AI làm đúng ở điểm percentile `statistics.json` chỉ tính trên 20.000 sample. Lý do: AI không tự chạy test, chỉ đọc số tổng, không đọc kỹ source SUT. Nguyên tắc: chạy thử và cố ý làm sai, chạy dò năng lực máy, kiểm lại bằng `.jtl`, đối chiếu source.
+  - `README.md`: thông tin SV/nhóm/workflow, bảng tự chấm (để trống cột Tự chấm), 4 scenario, nhóm endpoint auth/read/transactional, ngưỡng endurance (300 VU, ~6.390 req/s, p95 3 ms, 0 lỗi, RAM 274 MB, ~4,4 MB/phút), 4 issue #174–#177, link video demo, video skill chưa có, link repo, cấu trúc thư mục, ghi chú `.jtl`/`reports/` nộp trong zip.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
