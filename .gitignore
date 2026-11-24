@@ -3,3 +3,4 @@ jmeter.log
 node_modules/
 results/*.jtl
 reports/
+demo-read/results/
