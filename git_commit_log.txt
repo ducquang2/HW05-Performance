@@ -1,0 +1,26 @@
+d842e3a | ducquang2 | 2026-11-24 23:28:32 +0700 | docs(report): thêm bảng tự chấm và bản PDF của report, critique, audit
+7520a70 | ducquang2 | 2026-11-24 23:27:31 +0700 | docs(report): thêm AI Critique và README
+96a9daf | ducquang2 | 2026-11-24 23:25:53 +0700 | docs(report): ghi rõ nguồn số CPU của JMeter
+54e09cf | ducquang2 | 2026-11-24 23:25:25 +0700 | docs(report): thêm report chính HW05
+69a9c28 | ducquang2 | 2026-11-24 21:54:44 +0700 | chore(setup): bỏ kết quả chạy demo skill khỏi git
+cfd1bf4 | ducquang2 | 2026-11-24 21:54:01 +0700 | feat(skill): thêm Agent Skill eshop-jmeter-perf cho performance testing
+9f43052 | ducquang2 | 2026-11-24 21:50:42 +0700 | docs(evidence): thêm CPU/RAM node theo phút của 4 lượt chạy
+b2664f1 | ducquang2 | 2026-11-24 21:50:17 +0700 | docs(cpt): thêm đề xuất Continuous Performance Testing cho Task 3
+2acccb8 | ducquang2 | 2026-11-24 21:46:29 +0700 | docs(evidence): thêm ảnh GitHub Issues HW05
+36381bd | ducquang2 | 2026-11-24 21:39:21 +0700 | docs(evidence): thêm ảnh JMeter và Activity Monitor cắt từ video cho từng lượt
+455d077 | ducquang2 | 2026-11-24 21:26:00 +0700 | docs(bugs): log 4 issue HW05 lên GitHub (#174–#177)
+bb88976 | ducquang2 | 2026-11-24 21:19:47 +0700 | docs(analysis): review phân tích của AI, đối chiếu số từ .jtl và đánh giá đề xuất tối ưu
+e7e360b | ducquang2 | 2026-11-24 21:17:17 +0700 | docs(analysis): thêm phân tích kết quả của AI cho Task 2
+1dcf304 | ducquang2 | 2026-11-24 20:10:12 +0700 | docs(evidence): thêm ảnh fastfetch có hostname
+72340ad | ducquang2 | 2026-11-24 00:19:18 +0700 | test(soak): thêm plan Soak 300 VU 10 phút và script theo dõi RAM node
+e093d38 | ducquang2 | 2026-11-24 00:19:18 +0700 | fix(stress): rút bậc Stress còn 30 s, chỉnh Spike vượt ngưỡng, đổi tên plan sang 20261124
+a4d8e6e | ducquang2 | 2026-11-23 23:35:19 +0700 | fix(stress): tăng tải Stress tới 500 VU, think 0–100 ms để tìm điểm gãy
+73dc7c3 | ducquang2 | 2026-11-23 22:51:10 +0700 | test(spike): thêm test plan Spike 20120359_Spike_20261123
+9dad5fd | ducquang2 | 2026-11-23 22:51:10 +0700 | test(stress): thêm test plan Stress 20120359_Stress_20261123
+25a51c9 | ducquang2 | 2026-11-23 22:25:57 +0700 | test(load): thêm test plan Load 20120359_Load_20261123
+e83c4c1 | ducquang2 | 2026-11-23 22:08:58 +0700 | test(data): tạo user quang_u001..200 và CSV cho workflow W2
+28bc93b | ducquang2 | 2026-11-23 22:07:10 +0700 | docs(notes): ghi lại endpoint và cơ chế lockout của SUT cho W2
+a0a2281 | ducquang2 | 2026-11-23 22:03:05 +0700 | chore(setup): đổi sang workflow W2 theo phân công nhóm, sắp lại thư mục
+03c566d | ducquang2 | 2026-11-23 21:48:42 +0700 | docs(evidence): thêm bảng cấu hình phần cứng
+cadec1d | ducquang2 | 2026-11-23 21:48:09 +0700 | test(data): thêm script tạo user và file CSV cho workflow
+cd093c1 | ducquang2 | 2026-11-23 21:46:17 +0700 | chore(setup): khởi tạo repo HW05
