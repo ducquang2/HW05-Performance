@@ -18,13 +18,13 @@ Report chính: [`report/HW05_Report.md`](report/HW05_Report.md).
 
 | No. | Tiêu chí | Điểm | Tự chấm |
 |---|---|---|---|
-| 1 | Task 1 – Load testing | 30 | __ |
-| 2 | Task 1 – Stress testing | 20 | __ |
-| 3 | Task 1 – Spike testing | 20 | __ |
-| 4 | Task 2 – AI analysis + misinterpretation hunt | 10 | __ |
-| 5 | Task 3 – Continuous Performance Testing | 10 | __ |
-| 6 | Agent Skills | 10 | __ |
-| | **Tổng** | **100** | __ |
+| 1 | Task 1 – Load testing | 30 | 30 |
+| 2 | Task 1 – Stress testing | 20 | 20 |
+| 3 | Task 1 – Spike testing | 20 | 20 |
+| 4 | Task 2 – AI analysis + misinterpretation hunt | 10 | 10 |
+| 5 | Task 3 – Continuous Performance Testing | 10 | 10 |
+| 6 | Agent Skills | 10 | 5 |
+| | **Tổng** | **100** | **95** |
 
 ## Scenarios đã chạy
 
