@@ -135,3 +135,20 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Mục 10 `notes/workflow-w2.md`: bảng và lệnh chạy chính thức 4 plan theo thứ tự reset → monitor → jmeter → reset; trước Soak restart backend + `setup-users.js` để RAM đầu sạch.
   - Chạy thử `-Jthreads=50 -Jrampup=10 -Jduration=60` kèm `INTERVAL=10 bash scripts/monitor-node.sh`: 57.672 sample, 0 lỗi, đủ 8 bước, 50 thread, ~1.020 req/s, p95 2–3 ms; monitor ghi 8 dòng (CPU node 17–36%, RSS 99–110 MB) và tự dừng sau khi JMeter xong.
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 10 – Task 2: AI phân tích .jtl
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-24 21:14
+- Mục đích: Cho AI phân tích kết quả 4 lượt chạy chính thức (Load, Stress, Spike, Soak) của W2, đề xuất SLA và cách tối ưu backend, để sau đó tự review lại.
+- Prompt của tôi:
+  > Đây là 4 file .jtl và HTML report của các lượt Load, Stress, Spike, Soak cho workflow W2 trên EShop, kèm CSV CPU/RAM của process node. Hãy phân tích kết quả từng lượt: throughput, response time (avg, p90, p95, p99), error rate, điểm gãy của Stress, khả năng hồi phục sau Spike, xu hướng RAM trong Soak. Đề xuất ngưỡng hiệu năng (SLA) cho hệ thống. Sau đó đề xuất các cách tối ưu backend cụ thể (ví dụ index DB, connection pool, SQLite WAL, cache...).
+- Output của AI (tóm tắt), nguyên văn ở `report/task2-ai-analysis.md`:
+  - Tính lại số liệu từ `.jtl` (chỉ sample HTTP, chia cửa sổ thời gian); ghi chú percentile trong `statistics.json` chỉ tính trên 20.000 sample cuối.
+  - Load 30 VU: ~17 req/s, avg 2,28 ms, p95 5 ms, p99 6 ms, 0 % lỗi; checkout chậm nhất (avg 4,5 ms).
+  - Stress: 0 % lỗi tới 500 VU (9.624 req/s), không có điểm gãy cứng; knee ~350–400 VU (avg 1,1 → 2,2 ms, p95 tăng 3 → 11 ms, mức tăng throughput mỗi bậc giảm còn 60–70 %), CPU node 138 %.
+  - Spike 50 → 450 VU: ~9.050 req/s ở đỉnh, p95 8–9 ms, 0 % lỗi; hồi phục latency trong < 10 s, RSS giữ ~230 MB tới khi dừng test.
+  - Soak 300 VU: ~6.390 req/s ổn định, p95 3 ms, 0 % lỗi; RSS tăng ~4,4 MB/phút (234 → 274 MB), nghi do `userCarts` trong RAM không bao giờ xóa.
+  - Bảng SLA cho tải thường (≤ 300 VU) và tải đỉnh (≤ 450 VU); hệ thống đạt hết trừ tiêu chí RAM.
+  - 8 đề xuất tối ưu O1–O8: xóa/chuyển giỏ hàng khỏi RAM, SQLite WAL, index, bỏ UPDATE thừa khi login, cache categories/products, connection riêng đọc/ghi, cluster/PM2, bỏ `SELECT *`.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
