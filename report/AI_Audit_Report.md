@@ -17,7 +17,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Lockout: sai 2 lần đã khóa 3 phút (code cộng 2 mỗi lần sai, `server.js:54`), đặc tả là 3 lần / 30 giây. Mở khóa bằng `UPDATE users SET login_attempts=0, locked_until=NULL` trên `database.sqlite`, đã thử thật.
   - DB SQLite 1 file, restart backend sẽ DROP + reseed. Không có cột tồn kho nên không cần nạp kho.
   - Bảng 14 bất thường kèm file:dòng (API không lọc category/phân trang, sản phẩm không tồn tại trả 200 `{}`, checkout tin `total_amount` client và không xóa giỏ, coupon percent tính âm, so `>` thay vì `>=`, apply-coupon không cần token, register không chặn email trùng, trả password plaintext...).
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Không sửa.
 
 ### Lần 2 – Bước 1: thiết kế workflow W2 và dữ liệu CSV
 
@@ -32,7 +32,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `scripts/setup-users.js`: tạo `quang_u001..quang_u200` (mật khẩu `Quang1234!`), login thử trước khi đăng ký để không tạo trùng, xác nhận 200/200 login được, sinh `users.csv` (200 dòng), `categories.csv` (3 dòng), `coupons.csv` (2 dòng).
   - `scripts/reset-state.sh` (đổi tên từ `reset-lockout.sh`): mở khóa mọi user, xóa orders và coupon_usage của `quang_u*`, in giờ, login thử `quang_u001`. Giỏ hàng chỉ xóa được bằng restart backend (không có API xóa giỏ), restart thì phải chạy lại setup.
   - Đã chạy thật: setup tạo mới 200, chạy lần 2 báo "đã có 200" (không tạo trùng); reset mở khóa được user bị khóa và xóa được đơn test, login thử HTTP 200.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Sau khi chạy thử Stress/Spike thì phát hiện `reset-state.sh` in dòng "còn khóa" sau lệnh mở khóa nên luôn ra 0. Đã sửa để in số tài khoản đang bị khóa trước khi reset.
 
 ### Lần 3 – Bước 2: chọn thông số Load cho W2
 
@@ -45,7 +45,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Mục "5. Thông số Load" trong `notes/workflow-w2.md`: 30 VU, ramp-up 90 giây (3 giây/VU), giữ tải 5 phút, think-time 1–3 giây (Uniform Random Timer 1000 + 2000 ms) trước mỗi bước 2–8, lặp vô hạn dừng theo Duration.
   - Lý do: Node 1 luồng + SQLite 1 connection nên lệnh ghi xếp hàng, 30 VU là tải bình thường và chừa chỗ cho Stress; ramp chậm để login (có ghi DB) không dồn cùng lúc; 5 phút đủ sample, dài hơn để dành cho soak.
   - Vì Thread Group thường chỉ có 1 ô Duration nên đặt `duration = 90 + 300 = 390` giây. Ước lượng ~14 giây/vòng, ~17 request/giây.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Không sửa.
 
 ### Lần 4 – Bước 2: sinh test plan Load `20120359_Load_20261123.jmx`
 
@@ -59,7 +59,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `user.properties` ở root repo: `.jtl` dạng CSV, không lưu response data, có failure message, latency, connect time, thread counts, bytes, sent bytes, URL.
   - Chạy thử `-Jthreads=5 -Jrampup=10 -Jduration=60`: 155 request, 0 lỗi, đủ 8 bước. Tự thử trường hợp sai (filter category `!=`, id sản phẩm không tồn tại) để chắc assertion bắt được lỗi.
   - Lỗi của bản đầu đã sửa (ghi chi tiết ở `notes/review-testplans.md`): timer nằm trong Transaction Controller làm sinh sample transaction 0 ms khi hết giờ; 2 JSON Assertion trên cùng request làm mất failure message trong `.jtl`.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Sửa 2 lỗi phát hiện lúc chạy thử: timer nằm trong Transaction Controller làm sinh sample 0 ms, nên chuyển sang Flow Control Action đặt giữa các bước; 2 JSON Assertion trên cùng 1 request làm mất `failureMessage`, nên giữ lại 1 JSON Assertion và chuyển phần còn lại sang Response Assertion.
 
 ### Lần 5 – Bước 2: sinh test plan Stress `20120359_Stress_20261123.jmx`
 
@@ -73,7 +73,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Mục "6. Thông số Stress" trong `notes/workflow-w2.md`: +20 VU mỗi 60 s, trần 200 VU vì `users.csv` chỉ có 200 tài khoản, tổng 10 phút; điểm gãy là bậc đầu tiên có lỗi > 1%, p95 tăng vọt, hoặc throughput không tăng theo VU.
   - Lockout: thêm assertion "Không bị khóa (403 lockout)" ở bước login (ghi message `LOCKOUT 403 ...`), ghi chú 403 Forbidden ở bước có token là do token sai chứ không phải lockout (mục 8). Thêm dòng in số user đang khóa **trước** khi mở khóa vào `scripts/reset-state.sh` (dòng cũ in sau khi mở khóa nên luôn 0).
   - Chạy thử `-Jstep_users=2 -Jstep_secs=10 -Jstep_ramp=2`: 1637 request trong 100 s, 0 lỗi, đủ 8 bước, số thread tăng 2 → 20 theo bậc. Thử khóa 2 user bằng SQL: `.jtl` ghi đúng message LOCKOUT.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Chạy thử full thì đến 200 VU vẫn không gãy (chỉ khoảng 301,5 req/s). Đã sửa ở Lần 7.
 
 ### Lần 6 – Bước 2: sinh test plan Spike `20120359_Spike_20261123.jmx`
 
@@ -87,7 +87,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Mục "7. Thông số Spike" trong `notes/workflow-w2.md`: 60 s nền → vọt lên 160 VU trong 5 s → giữ 90 s → 115 s chỉ có nền để xem hồi phục, tổng 4,5 phút; 160 < 200 tài khoản.
   - Chạy thử `-Jbase_users=2 -Jspike_users=10 -Jspike_delay=20 -Jspike_secs=30 -Jtotal_secs=80`: 643 request, 0 lỗi, đủ 8 bước, số thread 2 → 12 → 2 đúng hình dạng. Thử nhanh 40 s ở mức 150 VU thật: 4238 request, 0 lỗi, max 76 ms.
   - Lệnh chạy chính thức cả 2 plan ghi ở mục 9 của `notes/workflow-w2.md`.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Đỉnh 160 VU với think 0,5–1 s quá nhẹ, không vượt ngưỡng. Đã sửa ở Lần 8.
 
 ### Lần 7 – Bước 2: sửa test plan Stress sau khi chạy thử full-size
 
@@ -103,7 +103,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `scripts/setup-users.js` nhận số user từ argv/`USER_COUNT` (mặc định 500), vẫn login thử trước để không tạo trùng; đã chạy: tạo mới 300, đã có 200, login OK 500/500; `data/users.csv` có 500 dòng.
   - Chạy thử `-Jstep_users=10 -Jstep_secs=10` (100 s, 10 → 100 VU): 108.509 sample, 0 lỗi, đủ 8 bước, req/s tăng đều 158 → 2.007 theo bậc, p95 2–3 ms.
   - Ghi thêm 1 dòng vào `notes/review-testplans.md`: AI chọn think 0,5–1 s và trần 200 VU theo gợi ý chung, không biết SUT chỉ mất ~1 ms/request.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: `.jtl` của lượt chạy thử lên tới 903 MB vì mỗi bậc 60 s. Đã rút bậc ở Lần 8.
 
 ### Lần 8 – Bước 2: rút bậc Stress, chỉnh Spike vượt ngưỡng, đổi tên plan sang 20261124
 
@@ -119,7 +119,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `.gitignore` thêm `results/*.jtl` và `reports/`, README thêm 1 dòng lý do (quá lớn cho GitHub, nộp trong zip).
   - Chạy thử Stress `-Jstep_users=10 -Jstep_secs=10`: 113.284 sample, 0 lỗi, đủ 8 bước, VU 10 → 100 mỗi 10 s, req/s 165 → 2.061. Spike `-Jbase_users=5 -Jspike_users=40 -Jspike_delay=15 -Jspike_secs=20 -Jtotal_secs=60`: 20.986 sample, 0 lỗi, số thread 5 → 45 → 5.
   - Thêm 2 dòng vào `notes/review-testplans.md`: Stress bậc 60 s làm `.jtl` 903 MB; Spike cũ 160 VU think 0,5–1 s gần như không tạo áp lực.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Không sửa.
 
 ### Lần 9 – Bước 4: sinh test plan Soak `20120359_Soak_20261124.jmx` và script theo dõi RAM node
 
@@ -134,7 +134,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `scripts/monitor-node.sh <file.csv> [PID]`: tự tìm `node server.js` nếu không có PID, mỗi 60 s ghi `time,cpu_percent,rss_mb`, tự dừng khi JMeter kết thúc hoặc Ctrl+C. Dùng cho cả 4 lượt chính thức, output `evidence/<type>/node-usage.csv`.
   - Mục 10 `notes/workflow-w2.md`: bảng và lệnh chạy chính thức 4 plan theo thứ tự reset → monitor → jmeter → reset; trước Soak restart backend + `setup-users.js` để RAM đầu sạch.
   - Chạy thử `-Jthreads=50 -Jrampup=10 -Jduration=60` kèm `INTERVAL=10 bash scripts/monitor-node.sh`: 57.672 sample, 0 lỗi, đủ 8 bước, 50 thread, ~1.020 req/s, p95 2–3 ms; monitor ghi 8 dòng (CPU node 17–36%, RSS 99–110 MB) và tự dừng sau khi JMeter xong.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Không sửa.
 
 ### Lần 10 – Task 2: AI phân tích .jtl
 
@@ -151,7 +151,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Soak 300 VU: ~6.390 req/s ổn định, p95 3 ms, 0 % lỗi; RSS tăng ~4,4 MB/phút (234 → 274 MB), nghi do `userCarts` trong RAM không bao giờ xóa.
   - Bảng SLA cho tải thường (≤ 300 VU) và tải đỉnh (≤ 450 VU); hệ thống đạt hết trừ tiêu chí RAM.
   - 8 đề xuất tối ưu O1–O8: xóa/chuyển giỏ hàng khỏi RAM, SQLite WAL, index, bỏ UPDATE thừa khi login, cache categories/products, connection riêng đọc/ghi, cluster/PM2, bỏ `SELECT *`.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Đối chiếu lại với `.jtl` thì thấy 6 chỗ đọc sai, O6 là hallucinated và O7 không làm được. Chi tiết ở `report/task2-review.md`.
 
 ### Lần 11 – Task 3: đề xuất Continuous Performance Testing
 
@@ -166,7 +166,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Quy tắc regression: ngưỡng kép p95 tăng > 20% và > 2 ms (vì p95 3 → 4 ms đã là +33%), median 3 lần, bỏ ramp, theo từng endpoint và tổng, Stress cần 2 bậc liên tiếp (tránh đợt GC 10 s ở 350 VU), error > 0,1% fail, p99 chỉ cảnh báo, RSS slope Soak > ~1 MB/phút, percentile lấy từ `.jtl`.
   - Ví dụ: commit sửa #174 kỳ vọng RSS slope về ~0 ở nightly; query chậm ~20 ms ở `/api/products` bị bắt ở tầng PR theo endpoint, chậm ~1 ms thì lọt tới nightly.
   - Bảng trade-off chi phí, báo động giả, báo động sót, baseline trôi, môi trường; 3 hạn chế (chưa cài đặt, ngưỡng suy ra từ 1 bộ đo, chỉ phủ W2).
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Không sửa.
 
 ### Lần 12 – Bước 8: Agent Skill `eshop-jmeter-perf`
 
@@ -179,7 +179,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - `skill/eshop-jmeter-perf/SKILL.md`: bảng đầu vào, quy tắc chung (assertion theo nội dung, không mật khẩu sai, think-time bằng Flow Control Action giữa các Transaction Controller, tham số qua `__P`, chạy CLI `-q user.properties -l -e -o`, percentile từ `.jtl`), 8 bước có điểm dừng (curl → CSV/tạo user/reset → thông số có chạy dò năng lực → sinh .jmx + smoke → chạy chính thức + monitor RAM → phân tích .jtl → AI phân tích, người review → log issue), bảng 17 bẫy đã gặp, checklist review 11 mục, ví dụ output script, bảng file đầu ra.
   - `skill/eshop-jmeter-perf/scripts/analyze-jtl.py`: bản của `scripts/analyze-jtl.py`, thêm `--skip N` (bỏ N giây ramp) và rps/error% theo endpoint. `scripts/jtl-windows.py`: chia `.jtl` theo cửa sổ thời gian (threads, req/s, p50/p95/p99/max, err%), có `--skip`.
   - Chạy thử cả 2 script trên `results/20120359_Load_20261124.jtl`: không skip ra 5.916 request, 15,2 req/s, p95 5 ms, p99 6 ms (khớp script cũ); `--skip 90` ra 17,1 req/s, max 23 ms.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Không sửa.
 
 ### Lần 13 – Viết report chính `report/HW05_Report.md`
 
@@ -191,7 +191,7 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
 - Output của AI (tóm tắt):
   - `report/HW05_Report.md` gồm 10 mục: thông tin chung (SUT, JMeter 5.6.3, phần cứng, link repo, video demo), bảng workflow nhóm 09 và cách W2 phủ auth/read/transactional, thiết kế test plan (8 bước, assertion, extractor, CSV, think-time, tham số 4 plan kèm lý do), tóm tắt review plan do AI sinh, quy trình reset lockout, kết quả 4 lượt kèm ảnh evidence và ngưỡng endurance (300 VU, ~6.390 req/s, p95 3 ms, 0 lỗi, RAM node 274,3 MB tăng ~4,4 MB/phút), tóm tắt Task 2, Task 3, bug #174–#177, hạn chế.
   - Số tổng lấy từ `report/task2-review.md`; số theo bậc Stress, theo giai đoạn Spike và theo phút Soak tính lại từ `.jtl` bằng `skill/eshop-jmeter-perf/scripts/jtl-windows.py`; giờ chạy lấy từ timestamp dòng đầu/cuối `.jtl`; CPU/RAM node từ `evidence/<type>/node-usage.csv`.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Sửa câu "JMeter chiếm 30–40% CPU": số này chỉ đo lúc chạy thử, lượt chạy chính thức không đo riêng.
 
 ### Lần 14 – Viết AI Critique và README
 
@@ -203,4 +203,4 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
 - Output của AI (tóm tắt):
   - `report/AI_Critique.md` (288 từ theo `wc -w`): trả lời 3 câu. AI sai ở timer trong Transaction Controller (sample 0 ms), thông số Stress 200 VU think 0,5–1 s không gãy, chốt điểm gãy 350 VU do một đợt chậm 10 s, O6 `better-sqlite3` "đọc song song" là hallucinated, O7 `cluster` bỏ sót `initDatabase()` `DROP TABLE`; AI làm đúng ở điểm percentile `statistics.json` chỉ tính trên 20.000 sample. Lý do: AI không tự chạy test, chỉ đọc số tổng, không đọc kỹ source SUT. Nguyên tắc: chạy thử và cố ý làm sai, chạy dò năng lực máy, kiểm lại bằng `.jtl`, đối chiếu source.
   - `README.md`: thông tin SV/nhóm/workflow, bảng tự chấm (để trống cột Tự chấm), 4 scenario, nhóm endpoint auth/read/transactional, ngưỡng endurance (300 VU, ~6.390 req/s, p95 3 ms, 0 lỗi, RAM 274 MB, ~4,4 MB/phút), 4 issue #174–#177, link video demo, video skill chưa có, link repo, cấu trúc thư mục, ghi chú `.jtl`/`reports/` nộp trong zip.
-- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+- Tôi đã review / sửa gì: Điền điểm tự chấm 95 vào README (Skill 5/10 vì không có video demo skill).
