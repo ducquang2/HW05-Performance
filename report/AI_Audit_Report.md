@@ -167,3 +167,16 @@ Công cụ: Claude Code (model Claude Opus 5.5) trong VS Code.
   - Ví dụ: commit sửa #174 kỳ vọng RSS slope về ~0 ở nightly; query chậm ~20 ms ở `/api/products` bị bắt ở tầng PR theo endpoint, chậm ~1 ms thì lọt tới nightly.
   - Bảng trade-off chi phí, báo động giả, báo động sót, baseline trôi, môi trường; 3 hạn chế (chưa cài đặt, ngưỡng suy ra từ 1 bộ đo, chỉ phủ W2).
 - Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
+
+### Lần 12 – Bước 8: Agent Skill `eshop-jmeter-perf`
+
+- Tên AI tool: Claude Code (Claude Opus 5.5)
+- Ngày giờ: 2026-11-24 21:53
+- Mục đích: Đóng gói quy trình performance testing của bài thành Agent Skill để dùng lại cho nhóm endpoint khác của EShop.
+- Prompt của tôi:
+  > Đóng gói quy trình performance testing vừa làm thành Agent Skill để dùng lại cho nhóm endpoint khác của EShop: từ danh sách endpoint → xác minh bằng curl → CSV → sinh test plan JMeter Load/Stress/Spike/Soak → chạy thử nhỏ → chạy chính thức có theo dõi RAM → phân tích .jtl ra bảng p95/p99/error/RPS theo endpoint và theo thời gian → để AI phân tích rồi người soi lỗi. Mỗi bước có điểm dừng cho người review, kèm checklist và bảng các bẫy đã gặp ở bài này.
+- Output của AI (tóm tắt):
+  - `skill/eshop-jmeter-perf/SKILL.md`: bảng đầu vào, quy tắc chung (assertion theo nội dung, không mật khẩu sai, think-time bằng Flow Control Action giữa các Transaction Controller, tham số qua `__P`, chạy CLI `-q user.properties -l -e -o`, percentile từ `.jtl`), 8 bước có điểm dừng (curl → CSV/tạo user/reset → thông số có chạy dò năng lực → sinh .jmx + smoke → chạy chính thức + monitor RAM → phân tích .jtl → AI phân tích, người review → log issue), bảng 17 bẫy đã gặp, checklist review 11 mục, ví dụ output script, bảng file đầu ra.
+  - `skill/eshop-jmeter-perf/scripts/analyze-jtl.py`: bản của `scripts/analyze-jtl.py`, thêm `--skip N` (bỏ N giây ramp) và rps/error% theo endpoint. `scripts/jtl-windows.py`: chia `.jtl` theo cửa sổ thời gian (threads, req/s, p50/p95/p99/max, err%), có `--skip`.
+  - Chạy thử cả 2 script trên `results/20120359_Load_20261124.jtl`: không skip ra 5.916 request, 15,2 req/s, p95 5 ms, p99 6 ms (khớp script cũ); `--skip 90` ra 17,1 req/s, max 23 ms.
+- Tôi đã review / sửa gì: _(sinh viên điền sau khi review)_
